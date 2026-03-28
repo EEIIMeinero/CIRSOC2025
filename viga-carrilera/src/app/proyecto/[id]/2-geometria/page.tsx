@@ -223,6 +223,72 @@ export default function GeometriaPage() {
         </CardContent>
       </Card>
 
+      {/* Vinculación entre vanos */}
+      {spans.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Vinculación entre Vanos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Defina cómo se vinculan los vanos consecutivos en cada apoyo interior.
+              En el modelo actual (Fase 1) cada vano se analiza como viga simplemente apoyada (SS).
+              Los apoyos con articulación (M=0) garantizan discontinuidad de momento.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="p-2 font-medium">Apoyo</th>
+                    <th className="p-2 font-medium">Vano Izq.</th>
+                    <th className="p-2 font-medium">Vano Der.</th>
+                    <th className="p-2 font-medium">Vinculación</th>
+                    <th className="p-2 font-medium">Descripción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {supports.slice(1, -1).map((sup) => (
+                    <tr key={sup.nodeIndex} className="border-b">
+                      <td className="p-2 font-medium">N{sup.nodeIndex}</td>
+                      <td className="p-2">V{sup.nodeIndex}</td>
+                      <td className="p-2">V{sup.nodeIndex + 1}</td>
+                      <td className="p-2">
+                        <Select
+                          value={sup.hasHinge ? "articulated" : "continuous"}
+                          onValueChange={(v) =>
+                            updateSupport(sup.nodeIndex, {
+                              hasHinge: v === "articulated",
+                            })
+                          }
+                        >
+                          <SelectTrigger className="w-44">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="articulated">Articulada (M=0)</SelectItem>
+                            <SelectItem value="continuous">Continua</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="p-2 text-xs text-muted-foreground">
+                        {sup.hasHinge
+                          ? "Momento nulo en el apoyo — vanos independientes"
+                          : "Continuidad de momento — Fase 2 (FEM continuo)"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-3 p-3 rounded-md bg-amber-50 border border-amber-200 text-sm text-amber-800">
+              <strong>Nota Fase 1:</strong> Actualmente todos los vanos se analizan como vigas
+              simplemente apoyadas (articuladas en cada extremo). La vinculación &quot;Continua&quot;
+              se implementará en la Fase 2 con análisis FEM 1D.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Visualizacion SVG */}
       <Card>
         <CardHeader>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useProjectStore } from "@/store/projectStore";
 import {
   SectionType,
@@ -10,6 +10,15 @@ import {
   CompactnessResult,
   RailType,
 } from "@/lib/types";
+import { calcSectionProps } from "@/lib/calc/sections";
+import { checkCompactness } from "@/lib/calc/checks/compactness";
+import {
+  getProfileNames,
+  type SteelProfile,
+  ALL_PROFILES,
+} from "@/lib/db/profiles";
+import { SvgSection } from "@/components/visualization/SvgSection";
+import { CompactnessGraph } from "@/components/conceptual-graphs/CompactnessGraph";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,45 +56,142 @@ const defaultDims: SectionDimensions = {
 };
 
 const defaultProps: SectionProperties = {
-  A: 0,
-  yc: 0,
-  Ix: 0,
-  SxTop: 0,
-  SxBot: 0,
-  Zx: 0,
-  Iy_eff: 0,
-  iy_eff: 0,
-  rts: 0,
-  J: 0,
-  Cw: 0,
-  wDL: 0,
+  A: 0, yc: 0, Ix: 0, SxTop: 0, SxBot: 0, Zx: 0,
+  Iy_eff: 0, iy_eff: 0, rts: 0, J: 0, Cw: 0, wDL: 0,
 };
 
 const defaultCompactness: CompactnessResult = {
-  lambda_f: 0,
-  lambda_pf: 0,
-  lambda_rf: 0,
-  flangeClass: "compact",
-  lambda_w: 0,
-  lambda_pw: 0,
-  lambda_rw: 0,
-  webClass: "compact",
+  lambda_f: 0, lambda_pf: 0, lambda_rf: 0, flangeClass: "compact",
+  lambda_w: 0, lambda_pw: 0, lambda_rw: 0, webClass: "compact",
 };
 
 export default function SeccionPage() {
-  const { section, setSection, rail, setRail } = useProjectStore();
+  const { section, setSection, rail, setRail, general } = useProjectStore();
 
   const [selectedType, setSelectedType] = useState<SectionType>(
     section?.type ?? "B"
   );
-  const [profileName, setProfileName] = useState(section?.profileName ?? "W460x74");
+  const [profileName, setProfileName] = useState(section?.profileName ?? "");
+  const [profileSearch, setProfileSearch] = useState("");
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [dims, setDims] = useState<SectionDimensions>(section?.dims ?? defaultDims);
   const [manualProps, setManualProps] = useState<SectionProperties>(
     section?.props ?? defaultProps
   );
+  const [calcProps, setCalcProps] = useState<SectionProperties>(
+    section?.props ?? defaultProps
+  );
+  const [compactness, setCompactness] = useState<CompactnessResult>(
+    section?.compactness ?? defaultCompactness
+  );
+
+  const Fy = general.material.Fy;
+  const E = general.material.E;
+
+  // Profile names grouped by series for the dropdown
+  const profileGroups = useMemo(() => getProfileNames(), []);
+
+  // Filtered profiles for search
+  const filteredProfiles = useMemo(() => {
+    if (!profileSearch.trim()) return ALL_PROFILES;
+    const q = profileSearch.trim().toUpperCase();
+    return ALL_PROFILES.filter((p) =>
+      p.name.toUpperCase().includes(q)
+    );
+  }, [profileSearch]);
+
+  // Compute section properties for types A, B, C whenever dims change
+  const computeProps = useCallback(
+    (type: SectionType, currentDims: SectionDimensions): SectionProperties => {
+      if (type === "K") return manualProps;
+      try {
+        const config: SectionConfig = {
+          type,
+          dims: currentDims,
+          props: defaultProps,
+          compactness: defaultCompactness,
+        };
+        return calcSectionProps(config);
+      } catch {
+        return defaultProps;
+      }
+    },
+    [manualProps]
+  );
+
+  // Recalculate on dims / type change (for B, C and A with manual dims)
+  useEffect(() => {
+    if (selectedType === "K") {
+      setCalcProps(manualProps);
+      return;
+    }
+    if (selectedType === "A" && profileName) {
+      // For Type A with a selected profile, props come from profile
+      // (already set when profile was selected)
+      return;
+    }
+    if (["B", "C"].includes(selectedType)) {
+      const props = computeProps(selectedType, dims);
+      setCalcProps(props);
+    }
+  }, [dims, selectedType, computeProps, manualProps, profileName]);
+
+  // Recalculate compactness whenever dims change
+  useEffect(() => {
+    if (selectedType === "K") return;
+    if (dims.bfs > 0 && dims.tfs > 0 && dims.h > 0 && dims.tw > 0) {
+      const result = checkCompactness(dims, Fy, E);
+      setCompactness(result);
+    }
+  }, [dims, Fy, E, selectedType]);
+
+  // Update manualProps -> calcProps for type K
+  useEffect(() => {
+    if (selectedType === "K") {
+      setCalcProps(manualProps);
+    }
+  }, [manualProps, selectedType]);
 
   const handleTypeSelect = (type: SectionType) => {
     setSelectedType(type);
+    if (type === "A") {
+      setProfileName("");
+      setProfileSearch("");
+    }
+  };
+
+  const handleProfileSelect = (profile: SteelProfile) => {
+    setProfileName(profile.name);
+    setProfileSearch("");
+    setShowProfileDropdown(false);
+
+    // Auto-fill dimensions from profile
+    const newDims: SectionDimensions = {
+      bfs: profile.bf,
+      tfs: profile.tf,
+      bfi: profile.bf,
+      tfi: profile.tf,
+      tw: profile.tw,
+      h: profile.h,
+      d: profile.d,
+    };
+    setDims(newDims);
+
+    // Auto-fill section properties from profile database
+    // Use calcSectionProps for consistency (it handles rts, iy_eff etc.)
+    const config: SectionConfig = {
+      type: "A",
+      dims: newDims,
+      props: defaultProps,
+      compactness: defaultCompactness,
+      profileName: profile.name,
+    };
+    const props = calcSectionProps(config);
+    setCalcProps(props);
+
+    // Compactness
+    const comp = checkCompactness(newDims, Fy, E);
+    setCompactness(comp);
   };
 
   const updateDim = (key: keyof SectionDimensions, value: number) => {
@@ -100,14 +206,15 @@ export default function SeccionPage() {
     const config: SectionConfig = {
       type: selectedType,
       dims: dims,
-      props: selectedType === "K" ? manualProps : defaultProps,
-      compactness: defaultCompactness,
+      props: calcProps,
+      compactness: compactness,
       profileName: selectedType === "A" ? profileName : undefined,
     };
     setSection(config);
   };
 
-  const currentProps = section?.props ?? defaultProps;
+  const hasValidProps = calcProps.A > 0;
+  const hasValidDims = dims.d > 0 && dims.bfs > 0 && dims.tw > 0;
 
   return (
     <div className="space-y-6">
@@ -149,59 +256,94 @@ export default function SeccionPage() {
           {selectedType === "A" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="profileName">Designacion del perfil</Label>
-                <Input
-                  id="profileName"
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  placeholder="Ej: W460x74, IPE400, HEB300"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Ingrese la designacion del perfil laminado. Las propiedades se
-                obtendran de la base de datos de perfiles o se pueden ingresar
-                manualmente a continuacion.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>d - Altura total (mm)</Label>
+                <Label htmlFor="profileSearch">Seleccionar perfil laminado</Label>
+                <div className="relative">
                   <Input
-                    type="number"
-                    value={dims.d}
-                    onChange={(e) => updateDim("d", Number(e.target.value))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>bf - Ancho ala (mm)</Label>
-                  <Input
-                    type="number"
-                    value={dims.bfs}
+                    id="profileSearch"
+                    value={profileName || profileSearch}
                     onChange={(e) => {
-                      const v = Number(e.target.value);
-                      setDims({ ...dims, bfs: v, bfi: v });
+                      setProfileSearch(e.target.value);
+                      setProfileName("");
+                      setShowProfileDropdown(true);
                     }}
+                    onFocus={() => setShowProfileDropdown(true)}
+                    placeholder="Buscar perfil... (ej: IPE 400, HEB 300, W36x150)"
+                    autoComplete="off"
                   />
+                  {showProfileDropdown && (
+                    <div className="absolute z-50 w-full mt-1 max-h-80 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg">
+                      {Object.entries(profileGroups).map(([series, _names]) => {
+                        const filtered = filteredProfiles.filter(
+                          (p) => p.series === series
+                        );
+                        if (filtered.length === 0) return null;
+                        return (
+                          <div key={series}>
+                            <div className="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 sticky top-0">
+                              {series}
+                            </div>
+                            {filtered.map((p) => (
+                              <div
+                                key={p.name}
+                                onClick={() => handleProfileSelect(p)}
+                                className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors ${
+                                  profileName === p.name ? "bg-blue-100 font-semibold" : ""
+                                }`}
+                              >
+                                <span className="font-medium">{p.name}</span>
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  d={p.d} bf={p.bf} tf={p.tf} tw={p.tw} — {p.weight} kg/m
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                      {filteredProfiles.length === 0 && (
+                        <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                          No se encontraron perfiles
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>tf - Espesor ala (mm)</Label>
-                  <Input
-                    type="number"
-                    value={dims.tfs}
-                    onChange={(e) => {
-                      const v = Number(e.target.value);
-                      setDims({ ...dims, tfs: v, tfi: v });
-                    }}
+                {/* Click outside to close */}
+                {showProfileDropdown && (
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowProfileDropdown(false)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>tw - Espesor alma (mm)</Label>
-                  <Input
-                    type="number"
-                    value={dims.tw}
-                    onChange={(e) => updateDim("tw", Number(e.target.value))}
-                  />
-                </div>
+                )}
               </div>
+
+              {profileName && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-200">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">d = </span>
+                    <span className="font-semibold">{dims.d} mm</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">bf = </span>
+                    <span className="font-semibold">{dims.bfs} mm</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">tf = </span>
+                    <span className="font-semibold">{dims.tfs} mm</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">tw = </span>
+                    <span className="font-semibold">{dims.tw} mm</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">h = </span>
+                    <span className="font-semibold">{dims.h} mm</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Peso = </span>
+                    <span className="font-semibold">{(calcProps.wDL / 9.81 * 1000).toFixed(1)} kg/m</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -230,7 +372,9 @@ export default function SeccionPage() {
                   value={dims.bfs}
                   onChange={(e) => {
                     const v = Number(e.target.value);
-                    setDims({ ...dims, bfs: v, bfi: v });
+                    const newDims = { ...dims, bfs: v, bfi: v };
+                    newDims.d = newDims.tfs + newDims.h + newDims.tfi;
+                    setDims(newDims);
                   }}
                 />
               </div>
@@ -241,7 +385,9 @@ export default function SeccionPage() {
                   value={dims.tfs}
                   onChange={(e) => {
                     const v = Number(e.target.value);
-                    setDims({ ...dims, tfs: v, tfi: v });
+                    const newDims = { ...dims, tfs: v, tfi: v };
+                    newDims.d = newDims.tfs + newDims.h + newDims.tfi;
+                    setDims(newDims);
                   }}
                 />
               </div>
@@ -416,6 +562,16 @@ export default function SeccionPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>rts (mm)</Label>
+                  <Input
+                    type="number"
+                    value={manualProps.rts}
+                    onChange={(e) =>
+                      setManualProps({ ...manualProps, rts: Number(e.target.value) })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>wDL - Peso propio (kN/m)</Label>
                   <Input
                     type="number"
@@ -425,6 +581,52 @@ export default function SeccionPage() {
                       setManualProps({ ...manualProps, wDL: Number(e.target.value) })
                     }
                   />
+                </div>
+              </div>
+              {/* Dimensions for visualization in K mode */}
+              <div className="pt-2 border-t">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Dimensiones para visualizacion (opcional):
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>d (mm)</Label>
+                    <Input
+                      type="number"
+                      value={dims.d}
+                      onChange={(e) => updateDim("d", Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>bfs (mm)</Label>
+                    <Input
+                      type="number"
+                      value={dims.bfs}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setDims({ ...dims, bfs: v, bfi: v });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>tf (mm)</Label>
+                    <Input
+                      type="number"
+                      value={dims.tfs}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setDims({ ...dims, tfs: v, tfi: v });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>tw (mm)</Label>
+                    <Input
+                      type="number"
+                      value={dims.tw}
+                      onChange={(e) => updateDim("tw", Number(e.target.value))}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -441,65 +643,140 @@ export default function SeccionPage() {
           <Button onClick={handleApplySection} className="mt-4">
             Aplicar seccion
           </Button>
-        </CardContent>
-      </Card>
 
-      {/* Propiedades calculadas */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Propiedades de la Seccion</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {section ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">A (cm2)</div>
-                <div className="font-semibold">{currentProps.A.toFixed(2)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">yc (mm)</div>
-                <div className="font-semibold">{currentProps.yc.toFixed(1)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Ix (cm4)</div>
-                <div className="font-semibold">{currentProps.Ix.toFixed(0)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Sx+ (cm3)</div>
-                <div className="font-semibold">{currentProps.SxTop.toFixed(1)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Sx- (cm3)</div>
-                <div className="font-semibold">{currentProps.SxBot.toFixed(1)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Zx (cm3)</div>
-                <div className="font-semibold">{currentProps.Zx.toFixed(1)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Iy_eff (cm4)</div>
-                <div className="font-semibold">{currentProps.Iy_eff.toFixed(0)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">J (cm4)</div>
-                <div className="font-semibold">{currentProps.J.toFixed(2)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">Cw (cm6)</div>
-                <div className="font-semibold">{currentProps.Cw.toFixed(0)}</div>
-              </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-muted-foreground text-xs">wDL (kN/m)</div>
-                <div className="font-semibold">{currentProps.wDL.toFixed(3)}</div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm text-muted-foreground text-center py-6">
-              Configure y aplique una seccion para ver las propiedades calculadas.
-            </div>
+          {section && (
+            <span className="ml-3 text-sm text-green-600 font-medium">
+              Seccion aplicada: Tipo {section.type}
+              {section.profileName ? ` — ${section.profileName}` : ""}
+            </span>
           )}
         </CardContent>
       </Card>
+
+      {/* Visualization + Properties side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* SVG Section visualization */}
+        {hasValidDims && (
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-base">Seccion Transversal</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <SvgSection
+                dims={dims}
+                props={hasValidProps ? calcProps : undefined}
+                width={280}
+                height={360}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Properties table */}
+        <Card className={hasValidDims ? "lg:col-span-2" : "lg:col-span-3"}>
+          <CardHeader>
+            <CardTitle>Propiedades de la Seccion</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {hasValidProps ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <PropCell label="A" value={calcProps.A.toFixed(2)} unit="cm2" />
+                <PropCell label="yc" value={calcProps.yc.toFixed(1)} unit="mm" />
+                <PropCell label="Ix" value={calcProps.Ix.toFixed(0)} unit="cm4" />
+                <PropCell label="Sx+" value={calcProps.SxTop.toFixed(1)} unit="cm3" />
+                <PropCell label="Sx-" value={calcProps.SxBot.toFixed(1)} unit="cm3" />
+                <PropCell label="Zx" value={calcProps.Zx.toFixed(1)} unit="cm3" />
+                <PropCell label="Iy_eff" value={calcProps.Iy_eff.toFixed(0)} unit="cm4" />
+                <PropCell label="J" value={calcProps.J.toFixed(2)} unit="cm4" />
+                <PropCell label="Cw" value={calcProps.Cw.toFixed(0)} unit="cm6" />
+                <PropCell label="rts" value={calcProps.rts.toFixed(1)} unit="mm" />
+                <PropCell label="wDL" value={calcProps.wDL.toFixed(3)} unit="kN/m" />
+                <PropCell label="iy_eff" value={(calcProps.iy_eff ?? 0).toFixed(1)} unit="mm" />
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground text-center py-6">
+                {selectedType === "A"
+                  ? "Seleccione un perfil de la base de datos para ver las propiedades."
+                  : selectedType === "K"
+                  ? "Ingrese las propiedades manualmente arriba."
+                  : "Ingrese las dimensiones para calcular las propiedades en tiempo real."}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Compactness check */}
+      {selectedType !== "K" && hasValidDims && dims.tfs > 0 && dims.tw > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Clasificacion de Compacidad — CIRSOC 301 Tabla B4.1b</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-2">
+                <div className="font-semibold">Ala (Flange)</div>
+                <div>
+                  <span className="text-muted-foreground">lambda_f = </span>
+                  {compactness.lambda_f.toFixed(2)}
+                  <span className="text-muted-foreground"> | lambda_pf = </span>
+                  {compactness.lambda_pf.toFixed(2)}
+                  <span className="text-muted-foreground"> | lambda_rf = </span>
+                  {compactness.lambda_rf.toFixed(2)}
+                </div>
+                <div>
+                  Clasificacion:{" "}
+                  <span
+                    className={`font-bold ${
+                      compactness.flangeClass === "compact"
+                        ? "text-green-600"
+                        : compactness.flangeClass === "noncompact"
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {compactness.flangeClass === "compact"
+                      ? "COMPACTA"
+                      : compactness.flangeClass === "noncompact"
+                      ? "NO COMPACTA"
+                      : "ESBELTA"}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="font-semibold">Alma (Web)</div>
+                <div>
+                  <span className="text-muted-foreground">lambda_w = </span>
+                  {compactness.lambda_w.toFixed(2)}
+                  <span className="text-muted-foreground"> | lambda_pw = </span>
+                  {compactness.lambda_pw.toFixed(2)}
+                  <span className="text-muted-foreground"> | lambda_rw = </span>
+                  {compactness.lambda_rw.toFixed(2)}
+                </div>
+                <div>
+                  Clasificacion:{" "}
+                  <span
+                    className={`font-bold ${
+                      compactness.webClass === "compact"
+                        ? "text-green-600"
+                        : compactness.webClass === "noncompact"
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {compactness.webClass === "compact"
+                      ? "COMPACTA"
+                      : compactness.webClass === "noncompact"
+                      ? "NO COMPACTA"
+                      : "ESBELTA"}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <CompactnessGraph compactness={compactness} width={500} height={140} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Carril */}
       <Card>
@@ -594,6 +871,16 @@ export default function SeccionPage() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/** Small helper component for displaying a property cell */
+function PropCell({ label, value, unit }: { label: string; value: string; unit: string }) {
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="text-muted-foreground text-xs">{label} ({unit})</div>
+      <div className="font-semibold">{value}</div>
     </div>
   );
 }

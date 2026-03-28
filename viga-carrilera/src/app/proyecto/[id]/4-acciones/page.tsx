@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SvgTestera } from "@/components/visualization/SvgTestera";
 
 const CRANE_COLORS = ["#3b82f6", "#ef4444", "#22c55e"];
 const CRANE_COLOR_LABELS = ["Azul", "Rojo", "Verde"];
@@ -388,6 +389,20 @@ export default function AccionesPage() {
                 </table>
               </div>
             </div>
+
+            {/* Diagrama SVG de Testera */}
+            {crane.axles.length > 0 && (
+              <div className="mt-4">
+                <h4 className="font-semibold text-sm mb-2">Diagrama de Testera</h4>
+                <SvgTestera
+                  axles={crane.axles}
+                  phi={crane.phi}
+                  color={crane.color}
+                  width={600}
+                  height={280}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

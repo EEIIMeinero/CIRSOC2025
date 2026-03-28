@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useProjectStore } from "@/store/projectStore";
+import { runAnalysis } from "@/lib/calc/engine";
+import type { ProjectData } from "@/lib/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,13 +17,71 @@ import {
 } from "@/components/ui/select";
 
 export default function CalculoPage() {
-  const { settings, setSettings, isCalculated } = useProjectStore();
+  const store = useProjectStore();
+  const { settings, setSettings, isCalculated } = store;
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const handleCalcular = () => {
-    // Placeholder: el calculo real se implementara con el engine
-    alert(
-      "Calculo iniciado. La implementacion del engine de analisis esta pendiente."
-    );
+    setError(null);
+    setSuccessMsg(null);
+
+    // Validate that a section has been defined
+    if (!store.section) {
+      setError("Defina la sección transversal primero (Módulo 3).");
+      return;
+    }
+
+    // Validate section properties
+    if (!store.section.props || store.section.props.Ix === 0 || store.section.props.Zx === 0) {
+      setError("Las propiedades de la sección son inválidas. Revise el Módulo 3.");
+      return;
+    }
+
+    // Validate spans
+    if (store.spans.length === 0 || store.spans.some((s) => s.length <= 0)) {
+      setError("Defina al menos un vano con longitud positiva (Módulo 2).");
+      return;
+    }
+
+    // Build ProjectData from the store
+    const project: ProjectData = {
+      general: store.general,
+      spans: store.spans,
+      supports: store.supports,
+      stiffeners: store.stiffeners,
+      section: store.section,
+      rail: store.rail,
+      cranes: store.cranes,
+      buffer: store.buffer,
+      settings: store.settings,
+    };
+
+    try {
+      const results = runAnalysis(project);
+
+      if (results.spanResults.length === 0) {
+        setError("El cálculo no produjo resultados. Verifique los datos de entrada.");
+        return;
+      }
+
+      store.setResults({
+        spanResults: results.spanResults,
+        reactions: results.reactions,
+        envelopes: results.envelopes,
+      });
+
+      const allPass = results.spanResults.every((r) => r.status !== "fail");
+      const maxEta = Math.max(...results.spanResults.map((r) => r.etaMax));
+      setSuccessMsg(
+        allPass
+          ? `Cálculo completado. Todos los vanos verifican (η_máx = ${maxEta.toFixed(3)}).`
+          : `Cálculo completado. Algunos vanos NO verifican (η_máx = ${maxEta.toFixed(3)}). Revise los resultados.`
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error desconocido durante el cálculo.";
+      setError(`Error en el cálculo: ${msg}`);
+    }
   };
 
   return (
@@ -281,9 +342,19 @@ export default function CalculoPage() {
         </CardContent>
       </Card>
 
-      {/* Boton de calculo */}
+      {/* Boton de calculo y mensajes */}
       <Card>
         <CardContent className="pt-6">
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm">
+              {error}
+            </div>
+          )}
+          {successMsg && (
+            <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm">
+              {successMsg}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div>
               {isCalculated ? (
