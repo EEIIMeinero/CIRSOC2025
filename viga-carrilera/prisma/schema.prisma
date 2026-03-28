@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  engineer    String?
+  license     String?
+  company     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  general     String   // JSON: datos generales + material + norma
+  spans       String   // JSON: vanos (hasta 10)
+  supports    String   // JSON: apoyos por nodo (hasta 11)
+  stiffeners  String   // JSON: rigidizadores por panel
+  secCfg      String   // JSON: configuración de sección (tipo + params)
+  cranes      String   // JSON: hasta 3 grúas con ejes
+  settings    String   // JSON: parámetros de cálculo
+  results     String?  // JSON: cache de resultados
+}
+
+model Material {
+  id          String  @id @default(cuid())
+  group       String  // "AR" | "US" | "EU" | "CUSTOM"
+  name        String
+  designation String
+  Fy          Float
+  Fu          Float
+  E           Float   @default(200000)
+  G           Float   @default(77000)
+  norm        String?
+  notes       String?
+}
+
+model CraneTemplate {
+  id          String @id @default(cuid())
+  code        String @unique
+  category    Int    // 1-5
+  Q           Float  // kN capacidad
+  Lp          Float  // m luz del puente
+  Gp          Float  // kN peso del puente
+  Gc          Float  // kN peso del carro
+  axles       Int
+  aw          Float  // mm distancia entre ruedas
+  cmaa        String // A-F
+  application String
+}
