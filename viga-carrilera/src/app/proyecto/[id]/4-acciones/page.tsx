@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SvgTestera } from "@/components/visualization/SvgTestera";
+import { SvgTesteraIsometric } from "@/components/visualization/SvgTesteraIsometric";
 
 const CRANE_COLORS = ["#3b82f6", "#ef4444", "#22c55e"];
 const CRANE_COLOR_LABELS = ["Azul", "Rojo", "Verde"];
@@ -45,6 +45,9 @@ function makeDefaultCrane(index: number): CraneConfig {
   };
 }
 
+// Track which axles have manually overridden Pv (keyed by "craneIndex-axleIndex")
+type PvOverrides = Set<string>;
+
 export default function AccionesPage() {
   const { cranes, setCranes, buffer, setBuffer, general } = useProjectStore();
   const [craneCount, setCraneCount] = useState(cranes.length || 1);
@@ -52,6 +55,7 @@ export default function AccionesPage() {
   const [libraryFilter, setLibraryFilter] = useState("");
   const [showLibrary, setShowLibrary] = useState(false);
   const [targetCraneIndex, setTargetCraneIndex] = useState(0);
+  const [pvOverrides, setPvOverrides] = useState<PvOverrides>(new Set());
 
   // Initialize cranes if empty
   const activeCranes: CraneConfig[] =
@@ -78,10 +82,11 @@ export default function AccionesPage() {
   const updateCraneCmaa = (index: number, cmaa: CmaaClass) => {
     const crane = activeCranes[index];
     const phi = CMAA_PHI[cmaa];
-    const updatedAxles = crane.axles.map((ax) => ({
-      ...ax,
-      Pv: ax.Pw * (1 + phi),
-    }));
+    const updatedAxles = crane.axles.map((ax, ai) => {
+      const key = `${index}-${ai}`;
+      if (pvOverrides.has(key)) return ax; // keep manual Pv
+      return { ...ax, Pv: ax.Pw * (1 + phi) };
+    });
     updateCrane(index, { cmaaClass: cmaa, phi, axles: updatedAxles });
   };
 
@@ -91,12 +96,47 @@ export default function AccionesPage() {
     data: Partial<CraneAxle>
   ) => {
     const crane = activeCranes[craneIndex];
+    const key = `${craneIndex}-${axleIndex}`;
+    const isManual = pvOverrides.has(key);
     const updatedAxles = crane.axles.map((ax, ai) => {
       if (ai !== axleIndex) return ax;
       const merged = { ...ax, ...data };
-      merged.Pv = merged.Pw * (1 + crane.phi);
+      // Only auto-calc Pv if not manually overridden
+      if (!isManual) {
+        merged.Pv = merged.Pw * (1 + crane.phi);
+      }
       return merged;
     });
+    updateCrane(craneIndex, { axles: updatedAxles });
+  };
+
+  const updateAxlePvManual = (
+    craneIndex: number,
+    axleIndex: number,
+    pv: number
+  ) => {
+    const crane = activeCranes[craneIndex];
+    const key = `${craneIndex}-${axleIndex}`;
+    const newOverrides = new Set(pvOverrides);
+    newOverrides.add(key);
+    setPvOverrides(newOverrides);
+    const updatedAxles = crane.axles.map((ax, ai) =>
+      ai === axleIndex ? { ...ax, Pv: pv } : ax
+    );
+    updateCrane(craneIndex, { axles: updatedAxles });
+  };
+
+  const resetPvToAuto = (craneIndex: number, axleIndex: number) => {
+    const crane = activeCranes[craneIndex];
+    const key = `${craneIndex}-${axleIndex}`;
+    const newOverrides = new Set(pvOverrides);
+    newOverrides.delete(key);
+    setPvOverrides(newOverrides);
+    const axle = crane.axles[axleIndex];
+    const autoVal = axle.Pw * (1 + crane.phi);
+    const updatedAxles = crane.axles.map((ax, ai) =>
+      ai === axleIndex ? { ...ax, Pv: autoVal } : ax
+    );
     updateCrane(craneIndex, { axles: updatedAxles });
   };
 
@@ -125,6 +165,18 @@ export default function AccionesPage() {
     const filtered = crane.axles
       .filter((_, i) => i !== axleIndex)
       .map((ax, i) => ({ ...ax, index: i }));
+    // Clean up overrides
+    const newOverrides = new Set<string>();
+    pvOverrides.forEach((key) => {
+      const [ci, ai] = key.split("-").map(Number);
+      if (ci === craneIndex) {
+        if (ai < axleIndex) newOverrides.add(key);
+        else if (ai > axleIndex) newOverrides.add(`${ci}-${ai - 1}`);
+      } else {
+        newOverrides.add(key);
+      }
+    });
+    setPvOverrides(newOverrides);
     updateCrane(craneIndex, { axles: filtered });
   };
 
@@ -146,6 +198,12 @@ export default function AccionesPage() {
         Pv: Math.round(Pw * (1 + phi) * 10) / 10,
       });
     }
+    // Clear overrides for this crane
+    const newOverrides = new Set<string>();
+    pvOverrides.forEach((key) => {
+      if (!key.startsWith(`${craneIndex}-`)) newOverrides.add(key);
+    });
+    setPvOverrides(newOverrides);
     updateCrane(craneIndex, {
       label: `${template.code} (Q=${template.Q} kN)`,
       cmaaClass: cmaa,
@@ -166,36 +224,57 @@ export default function AccionesPage() {
     : getCranesByCategory(Number(libraryCategory));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Cantidad de gruas */}
       <Card>
-        <CardHeader>
-          <CardTitle>Cantidad de Gruas</CardTitle>
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-base">Cantidad de Gruas</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 pb-2">
           <div className="flex items-center gap-4">
-            <Label>Gruas sobre la viga:</Label>
+            <Label className="text-sm">Gruas sobre la viga:</Label>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
+                className="h-7 w-7 p-0"
                 onClick={() => handleCraneCountChange(craneCount - 1)}
                 disabled={craneCount <= 1}
               >
                 -
               </Button>
-              <span className="w-10 text-center font-semibold text-lg">
+              <span className="w-8 text-center font-semibold">
                 {craneCount}
               </span>
               <Button
                 variant="outline"
                 size="sm"
+                className="h-7 w-7 p-0"
                 onClick={() => handleCraneCountChange(craneCount + 1)}
                 disabled={craneCount >= 3}
               >
                 +
               </Button>
             </div>
+            {/* Crane separation field when 2+ cranes */}
+            {activeCranes.length >= 2 && (
+              <div className="flex items-center gap-2 ml-6">
+                <Label className="text-sm whitespace-nowrap">Sep. min entre gruas (mm):</Label>
+                <Input
+                  type="number"
+                  className="w-24 h-8"
+                  value={activeCranes[0]?.minSeparation ?? 1000}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    const updated = activeCranes.map((c) => ({
+                      ...c,
+                      minSeparation: val,
+                    }));
+                    setCranes(updated);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -203,95 +282,17 @@ export default function AccionesPage() {
       {/* Configuracion por grua */}
       {activeCranes.map((crane, ci) => (
         <Card key={crane.id}>
-          <CardHeader>
-            <div className="flex items-center gap-3">
+          <CardHeader className="py-2 px-3">
+            <div className="flex items-center gap-2">
               <div
-                className="w-4 h-4 rounded-full"
+                className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: crane.color }}
               />
-              <CardTitle className="text-lg">{crane.label}</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Etiqueta</Label>
-                <Input
-                  value={crane.label}
-                  onChange={(e) => updateCrane(ci, { label: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Color</Label>
-                <div className="flex gap-2">
-                  {CRANE_COLORS.map((color, idx) => (
-                    <button
-                      key={color}
-                      onClick={() => updateCrane(ci, { color })}
-                      className={`w-8 h-8 rounded-full border-2 transition-colors ${
-                        crane.color === color
-                          ? "border-gray-900 ring-2 ring-offset-2 ring-blue-500"
-                          : "border-gray-300"
-                      }`}
-                      style={{ backgroundColor: color }}
-                      title={CRANE_COLOR_LABELS[idx]}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Clase CMAA</Label>
-                <Select
-                  value={crane.cmaaClass}
-                  onValueChange={(v) => updateCraneCmaa(ci, v as CmaaClass)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(["A", "B", "C", "D", "E", "F"] as CmaaClass[]).map(
-                      (cls) => (
-                        <SelectItem key={cls} value={cls}>
-                          Clase {cls}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>phi (factor dinamico)</Label>
-                <Input
-                  type="number"
-                  step={0.01}
-                  value={crane.phi}
-                  onChange={(e) => {
-                    const phi = Number(e.target.value);
-                    const updatedAxles = crane.axles.map((ax) => ({
-                      ...ax,
-                      Pv: ax.Pw * (1 + phi),
-                    }));
-                    updateCrane(ci, { phi, axles: updatedAxles });
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Gcrane - Peso del puente (kN)</Label>
-                <Input
-                  type="number"
-                  value={crane.Gcrane}
-                  onChange={(e) =>
-                    updateCrane(ci, { Gcrane: Number(e.target.value) })
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Biblioteca */}
-            <div className="flex gap-2">
+              <CardTitle className="text-base">{crane.label}</CardTitle>
               <Button
                 variant="outline"
                 size="sm"
+                className="ml-auto h-7 text-xs"
                 onClick={() => {
                   setTargetCraneIndex(ci);
                   setShowLibrary(!showLibrary);
@@ -300,106 +301,215 @@ export default function AccionesPage() {
                 Importar de biblioteca
               </Button>
             </div>
+          </CardHeader>
+          <CardContent className="px-3 pb-2 space-y-2">
+            {/* Crane config grid - 2 columns compact */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              <div className="flex items-center gap-1">
+                <Label className="text-xs whitespace-nowrap w-16">Etiqueta</Label>
+                <Input
+                  className="h-7 text-sm"
+                  value={crane.label}
+                  onChange={(e) => updateCrane(ci, { label: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs whitespace-nowrap w-12">Color</Label>
+                <div className="flex gap-1">
+                  {CRANE_COLORS.map((color, idx) => (
+                    <button
+                      key={color}
+                      onClick={() => updateCrane(ci, { color })}
+                      className={`w-6 h-6 rounded-full border-2 transition-colors ${
+                        crane.color === color
+                          ? "border-gray-900 ring-1 ring-offset-1 ring-blue-500"
+                          : "border-gray-300"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={CRANE_COLOR_LABELS[idx]}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs whitespace-nowrap w-12">CMAA</Label>
+                <Select
+                  value={crane.cmaaClass}
+                  onValueChange={(v) => updateCraneCmaa(ci, v as CmaaClass)}
+                >
+                  <SelectTrigger className="h-7 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(["A", "B", "C", "D", "E", "F"] as CmaaClass[]).map(
+                      (cls) => (
+                        <SelectItem key={cls} value={cls}>
+                          {cls}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs whitespace-nowrap w-6">phi</Label>
+                <Input
+                  type="number"
+                  step={0.01}
+                  className="h-7 text-sm w-20"
+                  value={crane.phi}
+                  onChange={(e) => {
+                    const phi = Number(e.target.value);
+                    const updatedAxles = crane.axles.map((ax, ai) => {
+                      const key = `${ci}-${ai}`;
+                      if (pvOverrides.has(key)) return ax;
+                      return { ...ax, Pv: ax.Pw * (1 + phi) };
+                    });
+                    updateCrane(ci, { phi, axles: updatedAxles });
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <Label className="text-xs whitespace-nowrap w-16">Gcrane</Label>
+                <Input
+                  type="number"
+                  className="h-7 text-sm"
+                  value={crane.Gcrane}
+                  onChange={(e) =>
+                    updateCrane(ci, { Gcrane: Number(e.target.value) })
+                  }
+                />
+                <span className="text-xs text-muted-foreground">kN</span>
+              </div>
+            </div>
 
-            {/* Tabla de ejes */}
+            {/* Tabla de ejes - compact */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-sm">Ejes de rueda</h4>
-                <Button variant="outline" size="sm" onClick={() => addAxle(ci)}>
-                  + Agregar eje
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-semibold text-xs text-slate-600">Ejes de rueda</h4>
+                <Button variant="outline" size="sm" className="h-6 text-xs px-2" onClick={() => addAxle(ci)}>
+                  + Eje
                 </Button>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b text-left">
-                      <th className="p-2 font-medium">Eje #</th>
-                      <th className="p-2 font-medium">dx (mm)</th>
-                      <th className="p-2 font-medium">Pw (kN)</th>
-                      <th className="p-2 font-medium">Ph (kN)</th>
-                      <th className="p-2 font-medium">HT (kN)</th>
-                      <th className="p-2 font-medium">Pv (kN)</th>
-                      <th className="p-2"></th>
+                    <tr className="border-b text-left bg-slate-50">
+                      <th className="px-1 py-1 font-medium w-8">#</th>
+                      <th className="px-1 py-1 font-medium">dx (mm)</th>
+                      <th className="px-1 py-1 font-medium">Pw (kN)</th>
+                      <th className="px-1 py-1 font-medium">Ph (kN)</th>
+                      <th className="px-1 py-1 font-medium">HT (kN)</th>
+                      <th className="px-1 py-1 font-medium">Pv (kN)</th>
+                      <th className="px-1 py-1 w-6"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {crane.axles.map((axle, ai) => (
-                      <tr key={ai} className="border-b">
-                        <td className="p-2 font-medium">{ai + 1}</td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            className="w-24"
-                            value={axle.dx}
-                            onChange={(e) =>
-                              updateAxle(ci, ai, { dx: Number(e.target.value) })
-                            }
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            className="w-20"
-                            value={axle.Pw}
-                            onChange={(e) =>
-                              updateAxle(ci, ai, { Pw: Number(e.target.value) })
-                            }
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            className="w-20"
-                            value={axle.Ph}
-                            onChange={(e) =>
-                              updateAxle(ci, ai, { Ph: Number(e.target.value) })
-                            }
-                          />
-                        </td>
-                        <td className="p-2">
-                          <Input
-                            type="number"
-                            className="w-20"
-                            value={axle.HT}
-                            onChange={(e) =>
-                              updateAxle(ci, ai, { HT: Number(e.target.value) })
-                            }
-                          />
-                        </td>
-                        <td className="p-2">
-                          <span className="font-medium text-blue-600">
-                            {axle.Pv.toFixed(1)}
-                          </span>
-                        </td>
-                        <td className="p-2">
-                          {crane.axles.length > 1 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() => removeAxle(ci, ai)}
-                            >
-                              X
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                    {crane.axles.map((axle, ai) => {
+                      const pvKey = `${ci}-${ai}`;
+                      const isManualPv = pvOverrides.has(pvKey);
+                      const autoPv = axle.Pw * (1 + crane.phi);
+                      return (
+                        <tr key={ai} className="border-b">
+                          <td className="px-1 py-0.5 font-medium text-slate-500">{ai + 1}</td>
+                          <td className="px-1 py-0.5">
+                            <Input
+                              type="number"
+                              className="h-6 w-20 text-xs"
+                              value={axle.dx}
+                              onChange={(e) =>
+                                updateAxle(ci, ai, { dx: Number(e.target.value) })
+                              }
+                            />
+                          </td>
+                          <td className="px-1 py-0.5">
+                            <Input
+                              type="number"
+                              className="h-6 w-16 text-xs"
+                              value={axle.Pw}
+                              onChange={(e) =>
+                                updateAxle(ci, ai, { Pw: Number(e.target.value) })
+                              }
+                            />
+                          </td>
+                          <td className="px-1 py-0.5">
+                            <Input
+                              type="number"
+                              className="h-6 w-16 text-xs"
+                              value={axle.Ph}
+                              onChange={(e) =>
+                                updateAxle(ci, ai, { Ph: Number(e.target.value) })
+                              }
+                            />
+                          </td>
+                          <td className="px-1 py-0.5">
+                            <Input
+                              type="number"
+                              className="h-6 w-16 text-xs"
+                              value={axle.HT}
+                              onChange={(e) =>
+                                updateAxle(ci, ai, { HT: Number(e.target.value) })
+                              }
+                            />
+                          </td>
+                          <td className="px-1 py-0.5">
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                className={`h-6 w-16 text-xs ${isManualPv ? "border-amber-400 bg-amber-50" : ""}`}
+                                value={Number(axle.Pv.toFixed(1))}
+                                onChange={(e) =>
+                                  updateAxlePvManual(ci, ai, Number(e.target.value))
+                                }
+                              />
+                              <span
+                                className={`inline-flex items-center px-1 py-0 rounded text-[9px] font-medium cursor-pointer select-none ${
+                                  isManualPv
+                                    ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                    : "bg-blue-100 text-blue-600"
+                                }`}
+                                onClick={() => {
+                                  if (isManualPv) resetPvToAuto(ci, ai);
+                                }}
+                                title={
+                                  isManualPv
+                                    ? `Click para restaurar auto: ${autoPv.toFixed(1)} kN`
+                                    : `Pw*(1+phi) = ${autoPv.toFixed(1)} kN`
+                                }
+                              >
+                                {isManualPv ? "manual" : "auto"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-1 py-0.5">
+                            {crane.axles.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 text-red-400 hover:text-red-600 text-xs"
+                                onClick={() => removeAxle(ci, ai)}
+                              >
+                                X
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* Diagrama SVG de Testera */}
+            {/* Diagrama SVG Isometrico */}
             {crane.axles.length > 0 && (
-              <div className="mt-4">
-                <h4 className="font-semibold text-sm mb-2">Diagrama de Testera</h4>
-                <SvgTestera
+              <div>
+                <SvgTesteraIsometric
                   axles={crane.axles}
                   phi={crane.phi}
                   color={crane.color}
-                  width={600}
-                  height={280}
+                  width={620}
+                  height={340}
                 />
               </div>
             )}
@@ -410,26 +520,26 @@ export default function AccionesPage() {
       {/* Biblioteca de gruas */}
       {showLibrary && (
         <Card>
-          <CardHeader>
-            <CardTitle>Biblioteca de Gruas</CardTitle>
+          <CardHeader className="py-2 px-3">
+            <CardTitle className="text-base">Biblioteca de Gruas</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4 items-end">
-              <div className="space-y-2">
-                <Label>Filtrar por texto</Label>
+          <CardContent className="px-3 pb-2 space-y-2">
+            <div className="flex gap-3 items-end">
+              <div>
+                <Label className="text-xs">Filtrar</Label>
                 <Input
                   placeholder="Codigo, aplicacion o capacidad..."
                   value={libraryFilter}
                   onChange={(e) => setLibraryFilter(e.target.value)}
-                  className="w-64"
+                  className="w-56 h-7 text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Categoria</Label>
+              <div>
+                <Label className="text-xs">Categoria</Label>
                 <Tabs value={libraryCategory} onValueChange={setLibraryCategory}>
-                  <TabsList>
+                  <TabsList className="h-7">
                     {Object.entries(CATEGORY_NAMES).map(([key, name]) => (
-                      <TabsTrigger key={key} value={key}>
+                      <TabsTrigger key={key} value={key} className="text-xs px-2 py-0.5">
                         {name}
                       </TabsTrigger>
                     ))}
@@ -438,43 +548,44 @@ export default function AccionesPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
+            <div className="overflow-x-auto max-h-72">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0">
                   <tr className="border-b text-left bg-muted/50">
-                    <th className="p-2 font-medium">Codigo</th>
-                    <th className="p-2 font-medium">Q (kN)</th>
-                    <th className="p-2 font-medium">Lp (m)</th>
-                    <th className="p-2 font-medium">Gp (kN)</th>
-                    <th className="p-2 font-medium">Gc (kN)</th>
-                    <th className="p-2 font-medium">Ejes</th>
-                    <th className="p-2 font-medium">aw (mm)</th>
-                    <th className="p-2 font-medium">CMAA</th>
-                    <th className="p-2 font-medium">Aplicacion</th>
-                    <th className="p-2"></th>
+                    <th className="px-1 py-1 font-medium">Codigo</th>
+                    <th className="px-1 py-1 font-medium">Q (kN)</th>
+                    <th className="px-1 py-1 font-medium">Lp (m)</th>
+                    <th className="px-1 py-1 font-medium">Gp (kN)</th>
+                    <th className="px-1 py-1 font-medium">Gc (kN)</th>
+                    <th className="px-1 py-1 font-medium">Ejes</th>
+                    <th className="px-1 py-1 font-medium">aw (mm)</th>
+                    <th className="px-1 py-1 font-medium">CMAA</th>
+                    <th className="px-1 py-1 font-medium">Aplicacion</th>
+                    <th className="px-1 py-1"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredTemplates.map((t) => (
                     <tr key={t.code} className="border-b hover:bg-muted/30">
-                      <td className="p-2 font-medium">{t.code}</td>
-                      <td className="p-2">{t.Q}</td>
-                      <td className="p-2">{t.Lp}</td>
-                      <td className="p-2">{t.Gp}</td>
-                      <td className="p-2">{t.Gc}</td>
-                      <td className="p-2">{t.axles}</td>
-                      <td className="p-2">{t.aw}</td>
-                      <td className="p-2">{t.cmaa}</td>
-                      <td className="p-2 text-muted-foreground">
+                      <td className="px-1 py-0.5 font-medium">{t.code}</td>
+                      <td className="px-1 py-0.5">{t.Q}</td>
+                      <td className="px-1 py-0.5">{t.Lp}</td>
+                      <td className="px-1 py-0.5">{t.Gp}</td>
+                      <td className="px-1 py-0.5">{t.Gc}</td>
+                      <td className="px-1 py-0.5">{t.axles}</td>
+                      <td className="px-1 py-0.5">{t.aw}</td>
+                      <td className="px-1 py-0.5">{t.cmaa}</td>
+                      <td className="px-1 py-0.5 text-muted-foreground">
                         {t.application}
                       </td>
-                      <td className="p-2">
+                      <td className="px-1 py-0.5">
                         <Button
                           size="sm"
                           variant="outline"
+                          className="h-6 text-xs px-2"
                           onClick={() => applyTemplate(t, targetCraneIndex)}
                         >
-                          Usar esta grua
+                          Usar
                         </Button>
                       </td>
                     </tr>
@@ -488,36 +599,39 @@ export default function AccionesPage() {
 
       {/* Buffer / Tope */}
       <Card>
-        <CardHeader>
-          <CardTitle>Configuracion de Tope (Buffer)</CardTitle>
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-base">Tope (Buffer)</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>eStop - Distancia al tope (mm)</Label>
+        <CardContent className="px-3 pb-2">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex items-center gap-1">
+              <Label className="text-xs whitespace-nowrap">eStop (mm)</Label>
               <Input
                 type="number"
+                className="h-7 text-sm"
                 value={buffer.eStop}
                 onChange={(e) =>
                   setBuffer({ ...buffer, eStop: Number(e.target.value) })
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label>Factor de tope (auto segun clase: {CMAA_BUFFER_FACTOR[general.cmaaClass]})</Label>
+            <div className="flex items-center gap-1">
+              <Label className="text-xs whitespace-nowrap">Factor ({CMAA_BUFFER_FACTOR[general.cmaaClass]})</Label>
               <Input
                 type="number"
                 step={0.01}
+                className="h-7 text-sm"
                 value={buffer.bufferFactor}
                 onChange={(e) =>
                   setBuffer({ ...buffer, bufferFactor: Number(e.target.value) })
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label>Excentricidad del tope (mm)</Label>
+            <div className="flex items-center gap-1">
+              <Label className="text-xs whitespace-nowrap">Excent. (mm)</Label>
               <Input
                 type="number"
+                className="h-7 text-sm"
                 value={buffer.eccentricity}
                 onChange={(e) =>
                   setBuffer({

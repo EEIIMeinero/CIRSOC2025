@@ -17,6 +17,7 @@ import {
   type SteelProfile,
   ALL_PROFILES,
 } from "@/lib/db/profiles";
+import { getRailsByType, type RailProfile } from "@/lib/db/rails";
 import { SvgSection } from "@/components/visualization/SvgSection";
 import { CompactnessGraph } from "@/components/conceptual-graphs/CompactnessGraph";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -85,11 +86,28 @@ export default function SeccionPage() {
     section?.compactness ?? defaultCompactness
   );
 
+  // Composite section extra fields
+  const [upnProfile, setUpnProfile] = useState(section?.upnProfile ?? "");
+  const [plateBf, setPlateBf] = useState(section?.plateBf ?? 200);
+  const [plateTf, setPlateTf] = useState(section?.plateTf ?? 16);
+  const [surgeBf, setSurgeBf] = useState(section?.surgeBf ?? 300);
+  const [surgeTf, setSurgeTf] = useState(section?.surgeTf ?? 12);
+  const [auxProfile, setAuxProfile] = useState(section?.auxProfile ?? "");
+  const [auxSep, setAuxSep] = useState(section?.auxSep ?? 500);
+  const [bInt, setBInt] = useState(section?.bInt ?? 300);
+  // companionProfile for type J uses profileName directly
+  const [companionSep, setCompanionSep] = useState(section?.companionSep ?? 600);
+
   const Fy = general.material.Fy;
   const E = general.material.E;
 
   // Profile names grouped by series for the dropdown
   const profileGroups = useMemo(() => getProfileNames(), []);
+
+  // Rail profiles from database
+  const railProfilesSA = useMemo(() => getRailsByType("SA"), []);
+  const railProfilesSF = useMemo(() => getRailsByType("SF"), []);
+  const railProfilesIRAM = useMemo(() => getRailsByType("IRAM"), []);
 
   // Filtered profiles for search
   const filteredProfiles = useMemo(() => {
@@ -100,7 +118,7 @@ export default function SeccionPage() {
     );
   }, [profileSearch]);
 
-  // Compute section properties for types A, B, C whenever dims change
+  // Compute section properties whenever dims change
   const computeProps = useCallback(
     (type: SectionType, currentDims: SectionDimensions): SectionProperties => {
       if (type === "K") return manualProps;
@@ -110,31 +128,39 @@ export default function SeccionPage() {
           dims: currentDims,
           props: defaultProps,
           compactness: defaultCompactness,
+          upnProfile: upnProfile || undefined,
+          plateBf,
+          plateTf,
+          surgeBf,
+          surgeTf,
+          auxProfile: auxProfile || undefined,
+          auxSep,
+          bInt,
+          companionProfile: profileName || undefined,
+          companionSep,
         };
         return calcSectionProps(config);
       } catch {
         return defaultProps;
       }
     },
-    [manualProps]
+    [manualProps, upnProfile, plateBf, plateTf, surgeBf, surgeTf, auxProfile, auxSep, bInt, profileName, companionSep]
   );
 
-  // Recalculate on dims / type change (for B, C and A with manual dims)
+  // Recalculate on dims / type change
   useEffect(() => {
     if (selectedType === "K") {
       setCalcProps(manualProps);
       return;
     }
     if (selectedType === "A" && profileName) {
-      // For Type A with a selected profile, props come from profile
-      // (already set when profile was selected)
       return;
     }
-    if (["B", "C"].includes(selectedType)) {
+    if (["B", "C", "D", "E", "F", "G", "H", "I", "J"].includes(selectedType)) {
       const props = computeProps(selectedType, dims);
       setCalcProps(props);
     }
-  }, [dims, selectedType, computeProps, manualProps, profileName]);
+  }, [dims, selectedType, computeProps, manualProps, profileName, surgeBf, surgeTf, auxSep, bInt, companionSep]);
 
   // Recalculate compactness whenever dims change
   useEffect(() => {
@@ -208,9 +234,29 @@ export default function SeccionPage() {
       dims: dims,
       props: calcProps,
       compactness: compactness,
-      profileName: selectedType === "A" ? profileName : undefined,
+      profileName: ["A", "D", "E", "F", "G", "J"].includes(selectedType) ? profileName : undefined,
+      upnProfile: selectedType === "D" ? upnProfile : undefined,
+      plateBf: selectedType === "E" ? plateBf : undefined,
+      plateTf: selectedType === "E" ? plateTf : undefined,
+      surgeBf: ["F", "G"].includes(selectedType) ? surgeBf : undefined,
+      surgeTf: ["F", "G"].includes(selectedType) ? surgeTf : undefined,
+      auxProfile: selectedType === "G" ? auxProfile : undefined,
+      auxSep: selectedType === "G" ? auxSep : undefined,
+      bInt: ["H", "I"].includes(selectedType) ? bInt : undefined,
+      companionProfile: selectedType === "J" ? profileName : undefined,
+      companionSep: selectedType === "J" ? companionSep : undefined,
     };
     setSection(config);
+  };
+
+  const handleRailSelect = (railProfile: RailProfile) => {
+    setRail({
+      ...rail,
+      designation: railProfile.name,
+      hr: railProfile.hr,
+      br: railProfile.br,
+      tw_r: railProfile.tw_r,
+    });
   };
 
   const hasValidProps = calcProps.A > 0;
@@ -632,11 +678,240 @@ export default function SeccionPage() {
             </div>
           )}
 
-          {!["A", "B", "C", "K"].includes(selectedType) && (
-            <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50/50 p-6 text-center text-sm text-muted-foreground">
-              La configuracion detallada para el Tipo {selectedType} estara
-              disponible proximamente. Por ahora, puede utilizar los Tipos A, B,
-              C o K.
+          {/* Type D: Rolled I + UPN channel */}
+          {selectedType === "D" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Perfil I laminado con canal UPN soldado sobre ala superior.</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Perfil base (I)</Label>
+                  <div className="relative">
+                    <Input
+                      value={profileName || profileSearch}
+                      onChange={(e) => { setProfileSearch(e.target.value); setProfileName(""); setShowProfileDropdown(true); }}
+                      onFocus={() => setShowProfileDropdown(true)}
+                      placeholder="Buscar perfil base..."
+                    />
+                    {showProfileDropdown && (
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                        {filteredProfiles.map((p) => (
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
+                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Canal UPN (designacion)</Label>
+                  <Input value={upnProfile} onChange={(e) => setUpnProfile(e.target.value)} placeholder="Ej: UPN 200" />
+                </div>
+              </div>
+              {profileName && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
+                  <DimInput label="tw - Espesor alma (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
+                  <DimInput label="bfs - Ancho ala sup (mm)" value={dims.bfs} onChange={(v) => updateDim("bfs", v)} />
+                  <DimInput label="tfs - Espesor ala sup (mm)" value={dims.tfs} onChange={(v) => updateDim("tfs", v)} />
+                  <DimInput label="bfi - Ancho ala inf (mm)" value={dims.bfi} onChange={(v) => updateDim("bfi", v)} />
+                  <DimInput label="tfi - Espesor ala inf (mm)" value={dims.tfi} onChange={(v) => updateDim("tfi", v)} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Type E: Rolled I + cover plate */}
+          {selectedType === "E" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Perfil I laminado con chapa PL soldada sobre ala superior.</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <Label>Perfil base (I)</Label>
+                  <div className="relative">
+                    <Input
+                      value={profileName || profileSearch}
+                      onChange={(e) => { setProfileSearch(e.target.value); setProfileName(""); setShowProfileDropdown(true); }}
+                      onFocus={() => setShowProfileDropdown(true)}
+                      placeholder="Buscar perfil base..."
+                    />
+                    {showProfileDropdown && (
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                        {filteredProfiles.map((p) => (
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
+                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <DimInput label="Ancho chapa PL (mm)" value={plateBf} onChange={setPlateBf} />
+                <DimInput label="Espesor chapa PL (mm)" value={plateTf} onChange={setPlateTf} />
+              </div>
+              {profileName && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
+                  <DimInput label="tw - Espesor alma (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
+                  <DimInput label="bfs - Ancho ala sup (mm)" value={dims.bfs} onChange={(v) => updateDim("bfs", v)} />
+                  <DimInput label="tfs - Espesor ala sup (mm)" value={dims.tfs} onChange={(v) => updateDim("tfs", v)} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Type F: Rolled I + surge plate */}
+          {selectedType === "F" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Perfil I con chapa horizontal (surge plate) soldada lateral al ala superior.</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <Label>Perfil base (I)</Label>
+                  <div className="relative">
+                    <Input
+                      value={profileName || profileSearch}
+                      onChange={(e) => { setProfileSearch(e.target.value); setProfileName(""); setShowProfileDropdown(true); }}
+                      onFocus={() => setShowProfileDropdown(true)}
+                      placeholder="Buscar perfil base..."
+                    />
+                    {showProfileDropdown && (
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                        {filteredProfiles.map((p) => (
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
+                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <DimInput label="Ancho surge plate (mm)" value={surgeBf} onChange={setSurgeBf} />
+                <DimInput label="Espesor surge plate (mm)" value={surgeTf} onChange={setSurgeTf} />
+              </div>
+              {profileName && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
+                  <DimInput label="tw (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Type G: Main + surge plate + auxiliary beam */}
+          {selectedType === "G" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Viga principal + chapa horizontal (surge plate) + viga auxiliar lateral.</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Perfil principal (I)</Label>
+                  <div className="relative">
+                    <Input
+                      value={profileName || profileSearch}
+                      onChange={(e) => { setProfileSearch(e.target.value); setProfileName(""); setShowProfileDropdown(true); }}
+                      onFocus={() => setShowProfileDropdown(true)}
+                      placeholder="Buscar perfil principal..."
+                    />
+                    {showProfileDropdown && (
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                        {filteredProfiles.map((p) => (
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
+                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Perfil auxiliar</Label>
+                  <Input value={auxProfile} onChange={(e) => setAuxProfile(e.target.value)} placeholder="Ej: IPE 200" />
+                </div>
+                <DimInput label="Separacion entre vigas (mm)" value={auxSep} onChange={setAuxSep} />
+                <DimInput label="Ancho surge plate (mm)" value={surgeBf} onChange={setSurgeBf} />
+                <DimInput label="Espesor surge plate (mm)" value={surgeTf} onChange={setSurgeTf} />
+              </div>
+              {profileName && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
+                  <DimInput label="tw (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
+                  <DimInput label="bfs (mm)" value={dims.bfs} onChange={(v) => updateDim("bfs", v)} />
+                  <DimInput label="tfs (mm)" value={dims.tfs} onChange={(v) => updateDim("tfs", v)} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Type H: Simple box section */}
+          {selectedType === "H" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Seccion cajon soldada con dos almas, dos alas.</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
+                <DimInput label="tw - Espesor alma (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
+                <DimInput label="bfs - Ancho ala sup (mm)" value={dims.bfs} onChange={(v) => { setDims({...dims, bfs: v, bfi: v}); }} />
+                <DimInput label="tfs - Espesor ala sup (mm)" value={dims.tfs} onChange={(v) => { setDims({...dims, tfs: v, tfi: v}); }} />
+                <DimInput label="bInt - Ancho interior (mm)" value={bInt} onChange={setBInt} />
+                <div className="space-y-2">
+                  <Label>d - Altura total (mm)</Label>
+                  <Input type="number" value={dims.tfs + dims.h + dims.tfi} disabled className="bg-muted" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Type I: Box with lattice */}
+          {selectedType === "I" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Seccion cajon con celosia lateral (alma tipo Vierendeel o Warren).</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
+                <DimInput label="tw - Espesor equiv. alma (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
+                <DimInput label="bfs - Ancho ala sup (mm)" value={dims.bfs} onChange={(v) => { setDims({...dims, bfs: v, bfi: v}); }} />
+                <DimInput label="tfs - Espesor ala (mm)" value={dims.tfs} onChange={(v) => { setDims({...dims, tfs: v, tfi: v}); }} />
+                <DimInput label="bInt - Ancho interior (mm)" value={bInt} onChange={setBInt} />
+                <div className="space-y-2">
+                  <Label>d - Altura total (mm)</Label>
+                  <Input type="number" value={dims.tfs + dims.h + dims.tfi} disabled className="bg-muted" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Type J: Twin beam system */}
+          {selectedType === "J" && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Sistema birriel — dos vigas paralelas vinculadas por arriostramientos.</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-2 col-span-2 md:col-span-1">
+                  <Label>Perfil de cada viga</Label>
+                  <div className="relative">
+                    <Input
+                      value={profileName || profileSearch}
+                      onChange={(e) => { setProfileSearch(e.target.value); setProfileName(""); setShowProfileDropdown(true); }}
+                      onFocus={() => setShowProfileDropdown(true)}
+                      placeholder="Buscar perfil..."
+                    />
+                    {showProfileDropdown && (
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                        {filteredProfiles.map((p) => (
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
+                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <DimInput label="Separacion entre ejes (mm)" value={companionSep} onChange={setCompanionSep} />
+              </div>
+              {profileName && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-200">
+                  <div className="text-sm"><span className="text-muted-foreground">d = </span><span className="font-semibold">{dims.d} mm</span></div>
+                  <div className="text-sm"><span className="text-muted-foreground">bf = </span><span className="font-semibold">{dims.bfs} mm</span></div>
+                  <div className="text-sm"><span className="text-muted-foreground">tf = </span><span className="font-semibold">{dims.tfs} mm</span></div>
+                  <div className="text-sm"><span className="text-muted-foreground">tw = </span><span className="font-semibold">{dims.tw} mm</span></div>
+                </div>
+              )}
             </div>
           )}
 
@@ -665,6 +940,8 @@ export default function SeccionPage() {
               <SvgSection
                 dims={dims}
                 props={hasValidProps ? calcProps : undefined}
+                railConfig={rail.type !== "none" && rail.hr > 0 ? { hr: rail.hr, br: rail.br } : undefined}
+                sectionType={selectedType}
                 width={280}
                 height={360}
               />
@@ -803,30 +1080,64 @@ export default function SeccionPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Excentricidad (mm)</Label>
-              <Input
-                type="number"
-                value={rail.eccentricity}
-                onChange={(e) =>
-                  setRail({ ...rail, eccentricity: Number(e.target.value) })
-                }
-              />
-            </div>
+
+            {/* Designation selector from database */}
+            {rail.type === "SA" && (
+              <div className="space-y-2">
+                <Label>Designacion SA</Label>
+                <Select value={rail.designation ?? ""} onValueChange={(v) => {
+                  const rp = railProfilesSA.find((r) => r.name === v);
+                  if (rp) handleRailSelect(rp);
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                  <SelectContent>
+                    {railProfilesSA.map((r) => (
+                      <SelectItem key={r.name} value={r.name}>{r.name} — {r.hr}×{r.br}mm, {r.weight} kg/m</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {rail.type === "SF" && (
+              <div className="space-y-2">
+                <Label>Designacion SF</Label>
+                <Select value={rail.designation ?? ""} onValueChange={(v) => {
+                  const rp = railProfilesSF.find((r) => r.name === v);
+                  if (rp) handleRailSelect(rp);
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                  <SelectContent>
+                    {railProfilesSF.map((r) => (
+                      <SelectItem key={r.name} value={r.name}>{r.name} — {r.hr}×{r.br}mm, {r.weight} kg/m</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {rail.type === "IRAM" && (
+              <div className="space-y-2">
+                <Label>Designacion IRAM</Label>
+                <Select value={rail.designation ?? ""} onValueChange={(v) => {
+                  const rp = railProfilesIRAM.find((r) => r.name === v);
+                  if (rp) handleRailSelect(rp);
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                  <SelectContent>
+                    {railProfilesIRAM.map((r) => (
+                      <SelectItem key={r.name} value={r.name}>{r.name} — h={r.hr} br={r.br} base={r.bbase}mm, {r.weight} kg/m</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Conexion</Label>
               <Select
                 value={rail.connection}
-                onValueChange={(v) =>
-                  setRail({
-                    ...rail,
-                    connection: v as "continuous" | "discontinuous",
-                  })
-                }
+                onValueChange={(v) => setRail({ ...rail, connection: v as "continuous" | "discontinuous" })}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="continuous">Continuo</SelectItem>
                   <SelectItem value="discontinuous">Discontinuo</SelectItem>
@@ -835,38 +1146,49 @@ export default function SeccionPage() {
             </div>
           </div>
 
-          {rail.type === "custom" && (
-            <div className="grid grid-cols-3 gap-4 pt-2">
+          {/* Rail dimensions — always shown when type != none */}
+          {rail.type !== "none" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
               <div className="space-y-2">
                 <Label>Altura hr (mm)</Label>
-                <Input
-                  type="number"
-                  value={rail.hr}
-                  onChange={(e) =>
-                    setRail({ ...rail, hr: Number(e.target.value) })
-                  }
-                />
+                <Input type="number" value={rail.hr} onChange={(e) => setRail({ ...rail, hr: Number(e.target.value) })} />
               </div>
               <div className="space-y-2">
                 <Label>Ancho cabeza br (mm)</Label>
-                <Input
-                  type="number"
-                  value={rail.br}
-                  onChange={(e) =>
-                    setRail({ ...rail, br: Number(e.target.value) })
-                  }
-                />
+                <Input type="number" value={rail.br} onChange={(e) => setRail({ ...rail, br: Number(e.target.value) })} />
               </div>
               <div className="space-y-2">
                 <Label>Espesor alma tw_r (mm)</Label>
-                <Input
-                  type="number"
-                  value={rail.tw_r}
-                  onChange={(e) =>
-                    setRail({ ...rail, tw_r: Number(e.target.value) })
-                  }
-                />
+                <Input type="number" value={rail.tw_r} onChange={(e) => setRail({ ...rail, tw_r: Number(e.target.value) })} />
               </div>
+              <div className="space-y-2">
+                <Label>Excentricidad (mm)</Label>
+                <Input type="number" value={rail.eccentricity} onChange={(e) => setRail({ ...rail, eccentricity: Number(e.target.value) })} />
+              </div>
+            </div>
+          )}
+
+          {/* Splice params for discontinuous */}
+          {rail.connection === "discontinuous" && rail.type !== "none" && (
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="space-y-2">
+                <Label>Ancho junta splice (mm)</Label>
+                <Input type="number" value={rail.spliceB ?? 0} onChange={(e) => setRail({ ...rail, spliceB: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Espesor junta splice (mm)</Label>
+                <Input type="number" value={rail.spliceT ?? 0} onChange={(e) => setRail({ ...rail, spliceT: Number(e.target.value) })} />
+              </div>
+            </div>
+          )}
+
+          {/* Summary of selected rail */}
+          {rail.type !== "none" && rail.hr > 0 && (
+            <div className="p-3 bg-gray-50 rounded-lg border text-sm grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div><span className="text-muted-foreground">hr = </span><span className="font-semibold">{rail.hr} mm</span></div>
+              <div><span className="text-muted-foreground">br = </span><span className="font-semibold">{rail.br} mm</span></div>
+              <div><span className="text-muted-foreground">tw_r = </span><span className="font-semibold">{rail.tw_r} mm</span></div>
+              <div><span className="text-muted-foreground">e = </span><span className="font-semibold">{rail.eccentricity} mm</span></div>
             </div>
           )}
         </CardContent>
@@ -881,6 +1203,16 @@ function PropCell({ label, value, unit }: { label: string; value: string; unit: 
     <div className="rounded-lg border p-3">
       <div className="text-muted-foreground text-xs">{label} ({unit})</div>
       <div className="font-semibold">{value}</div>
+    </div>
+  );
+}
+
+/** Dimension input helper */
+function DimInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Input type="number" value={value} onChange={(e) => onChange(Number(e.target.value))} />
     </div>
   );
 }

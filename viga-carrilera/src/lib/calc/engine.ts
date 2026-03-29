@@ -5,6 +5,7 @@
 
 import type {
   ProjectData,
+  SectionConfig,
   SpanResult,
   ReactionResult,
   EnvelopeResult,
@@ -18,6 +19,9 @@ import { checkFlexureMinor } from "./checks/flexionMenor";
 import { checkShear } from "./checks/corte";
 import { checkInteraction } from "./checks/interaccion";
 import { checkDeflection } from "./checks/deflexion";
+import { calcSectionProps } from "./sections";
+import { checkCompactness } from "./checks/compactness";
+import { ALL_PROFILES, type SteelProfile } from "@/lib/db/profiles";
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -337,4 +341,132 @@ function accumReaction(
     existing.Rmin = existing.Rmin === 0 ? rMin : Math.min(existing.Rmin, rMin);
     existing.Rinst = Math.max(existing.Rinst, rInst);
   }
+}
+
+// ─── Resize Suggestion ──────────────────────────────────────────────────────
+
+export interface ResizeSuggestion {
+  profileName: string;
+  eta: number;
+  reason: "oversize" | "undersize";
+  message: string;
+  section: SectionConfig;
+}
+
+/**
+ * Build a SectionConfig from a SteelProfile for analysis.
+ */
+function sectionFromProfile(profile: SteelProfile, Fy: number, E: number): SectionConfig {
+  const dims = {
+    bfs: profile.bf,
+    tfs: profile.tf,
+    bfi: profile.bf,
+    tfi: profile.tf,
+    tw: profile.tw,
+    h: profile.h,
+    d: profile.d,
+  };
+  const partialConfig: SectionConfig = {
+    type: "A",
+    dims,
+    props: { A: 0, yc: 0, Ix: 0, SxTop: 0, SxBot: 0, Zx: 0, Iy_eff: 0, iy_eff: 0, rts: 0, J: 0, Cw: 0, wDL: 0 },
+    compactness: { lambda_f: 0, lambda_pf: 0, lambda_rf: 0, flangeClass: "compact", lambda_w: 0, lambda_pw: 0, lambda_rw: 0, webClass: "compact" },
+    profileName: profile.name,
+  };
+  const props = calcSectionProps(partialConfig);
+  const comp = checkCompactness(dims, Fy, E);
+  return { ...partialConfig, props, compactness: comp };
+}
+
+/**
+ * Quick analysis: run the engine with a candidate section, return the max eta.
+ */
+function quickEta(project: ProjectData, candidateSection: SectionConfig): number {
+  const testProject: ProjectData = { ...project, section: candidateSection };
+  try {
+    const result = runAnalysis(testProject);
+    if (result.spanResults.length === 0) return Infinity;
+    return Math.max(...result.spanResults.map((r) => r.etaMax));
+  } catch {
+    return Infinity;
+  }
+}
+
+/**
+ * Suggest a resized section if the current one fails (eta > 1.0) or is oversized (eta < 0.50).
+ *
+ * - If eta > 1.0: tries the next larger profile in the same series until one passes.
+ * - If eta < 0.50: tries the next smaller profile until eta is closer to 0.70-0.85.
+ *
+ * Only works for rolled profiles (type "A") with a known profileName.
+ */
+export function suggestResize(project: ProjectData, currentEta: number): ResizeSuggestion | null {
+  const { section, general } = project;
+  if (!section || section.type !== "A" || !section.profileName) return null;
+
+  const Fy = general.material.Fy;
+  const E = general.material.E;
+
+  // Find current profile in database
+  const currentName = section.profileName.trim().toUpperCase().replace(/\s+/g, " ");
+  const seriesProfiles = ALL_PROFILES.filter((p) => {
+    const pName = p.name.toUpperCase().replace(/\s+/g, " ");
+    return pName.split(" ")[0] === currentName.split(" ")[0]; // same series prefix
+  });
+
+  if (seriesProfiles.length === 0) return null;
+
+  const currentIdx = seriesProfiles.findIndex(
+    (p) => p.name.toUpperCase().replace(/\s+/g, " ") === currentName
+  );
+  if (currentIdx < 0) return null;
+
+  if (currentEta > 1.0) {
+    // Section fails -- try bigger profiles
+    for (let i = currentIdx + 1; i < seriesProfiles.length; i++) {
+      const candidate = seriesProfiles[i];
+      const candidateSection = sectionFromProfile(candidate, Fy, E);
+      const eta = quickEta(project, candidateSection);
+      if (eta < 1.0) {
+        return {
+          profileName: candidate.name,
+          eta,
+          reason: "undersize",
+          message: `La seccion no verifica (eta=${currentEta.toFixed(2)}). Se sugiere redimensionar a ${candidate.name} (eta=${eta.toFixed(2)}).`,
+          section: candidateSection,
+        };
+      }
+    }
+    // No profile found in this series large enough
+    return null;
+  }
+
+  if (currentEta < 0.50 && currentIdx > 0) {
+    // Section is oversized -- try smaller profiles
+    let bestCandidate: { profile: SteelProfile; eta: number; section: SectionConfig } | null = null;
+    for (let i = currentIdx - 1; i >= 0; i--) {
+      const candidate = seriesProfiles[i];
+      const candidateSection = sectionFromProfile(candidate, Fy, E);
+      const eta = quickEta(project, candidateSection);
+      if (eta < 1.0 && eta >= 0.50) {
+        bestCandidate = { profile: candidate, eta, section: candidateSection };
+        // Keep going smaller to find optimal (closest to 0.70-0.85)
+        if (eta > 0.85) break;
+      } else if (eta >= 1.0) {
+        // Too small -- use the previous best
+        break;
+      }
+    }
+    if (bestCandidate) {
+      return {
+        profileName: bestCandidate.profile.name,
+        eta: bestCandidate.eta,
+        reason: "oversize",
+        message: `La seccion esta sobredimensionada (eta=${currentEta.toFixed(2)}). Se podria optimizar a ${bestCandidate.profile.name} (eta=${bestCandidate.eta.toFixed(2)}).`,
+        section: bestCandidate.section,
+      };
+    }
+  }
+
+  return null;
 }
