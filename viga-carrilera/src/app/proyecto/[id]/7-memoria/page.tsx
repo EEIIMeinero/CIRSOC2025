@@ -1,6 +1,8 @@
 "use client";
 
 import { useProjectStore } from "@/store/projectStore";
+import { generatePDF } from "@/lib/pdfGenerator";
+import type { ProjectData } from "@/lib/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -17,13 +19,23 @@ const MEMORIA_SECTIONS = [
 ];
 
 export default function MemoriaPage() {
-  const { isCalculated, general, spans, section, cranes, spanResults } =
-    useProjectStore();
+  const store = useProjectStore();
+  const { isCalculated, general, spans, section, cranes, spanResults } = store;
 
   const handleGenerarPDF = () => {
-    alert(
-      "La generacion de PDF se implementara proximamente. Se generara un documento con todas las secciones de la memoria de calculo."
-    );
+    const project: ProjectData = {
+      general: store.general,
+      spans: store.spans,
+      supports: store.supports,
+      stiffeners: store.stiffeners,
+      section: store.section!,
+      rail: store.rail,
+      cranes: store.cranes,
+      buffer: store.buffer,
+      settings: store.settings,
+    };
+    const doc = generatePDF(project, store.spanResults, store.reactions);
+    doc.save(`Memoria_${general.projectName.replace(/\s+/g, "_")}.pdf`);
   };
 
   const handleExportarExcel = () => {
