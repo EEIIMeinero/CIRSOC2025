@@ -53,7 +53,7 @@ export function SvgSection({ dims, props, railConfig, sectionType = "B", width =
   const isTwin = sectionType === "J";
 
   return (
-    <svg width={width} height={height} className="border rounded bg-white">
+    <svg width={width} height={height} className="border border-[hsl(230,15%,22%)] rounded bg-[hsl(230,20%,12%)]">
       {/* Rail */}
       {railConfig && railH > 0 && sRailH > 2 && (
         <>
@@ -124,7 +124,7 @@ export function SvgSection({ dims, props, railConfig, sectionType = "B", width =
                 stroke="#1e3a5f" strokeWidth={0.8} strokeDasharray="4,2" />
             );
           })}
-          <text x={cx} y={topFlangeY - 4} fontSize={8} fill="#666" textAnchor="middle">Birriel</text>
+          <text x={cx} y={topFlangeY - 4} fontSize={8} fill="#94a3b8" textAnchor="middle">Birriel</text>
         </>
       )}
 
@@ -200,11 +200,11 @@ export function SvgSection({ dims, props, railConfig, sectionType = "B", width =
       {!isTwin && (
         <>
           <line x1={cx + sBfs / 2 + 20} y1={topY} x2={cx + sBfs / 2 + 20} y2={topY + sD} stroke="#666" strokeWidth={0.5} />
-          <text x={cx + sBfs / 2 + 24} y={topY + sD / 2 + 4} fontSize={9} fill="#666">d={d}</text>
+          <text x={cx + sBfs / 2 + 24} y={topY + sD / 2 + 4} fontSize={9} fill="#94a3b8">d={d}</text>
           <line x1={cx - sBfs / 2} y1={topY - 8} x2={cx + sBfs / 2} y2={topY - 8} stroke="#666" strokeWidth={0.5} />
-          <text x={cx - 15} y={topY - 12} fontSize={9} fill="#666" textAnchor="middle">bfs={bfs}</text>
+          <text x={cx - 15} y={topY - 12} fontSize={9} fill="#94a3b8" textAnchor="middle">bfs={bfs}</text>
           <line x1={cx - sBfi / 2} y1={topY + sD + 12} x2={cx + sBfi / 2} y2={topY + sD + 12} stroke="#666" strokeWidth={0.5} />
-          <text x={cx - 15} y={topY + sD + 24} fontSize={9} fill="#666" textAnchor="middle">bfi={bfi}</text>
+          <text x={cx - 15} y={topY + sD + 24} fontSize={9} fill="#94a3b8" textAnchor="middle">bfi={bfi}</text>
         </>
       )}
 
