@@ -322,8 +322,8 @@ export default function AccionesPage() {
                       onClick={() => updateCrane(ci, { color })}
                       className={`w-6 h-6 rounded-full border-2 transition-colors ${
                         crane.color === color
-                          ? "border-gray-900 ring-1 ring-offset-1 ring-blue-500"
-                          : "border-gray-300"
+                          ? "border-slate-200 ring-1 ring-offset-1 ring-blue-500"
+                          : "border-slate-600"
                       }`}
                       style={{ backgroundColor: color }}
                       title={CRANE_COLOR_LABELS[idx]}
@@ -379,14 +379,14 @@ export default function AccionesPage() {
                     updateCrane(ci, { Gcrane: Number(e.target.value) })
                   }
                 />
-                <span className="text-xs text-muted-foreground">kN</span>
+                <span className="text-xs text-slate-400">kN</span>
               </div>
             </div>
 
             {/* Tabla de ejes - compact */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <h4 className="font-semibold text-xs text-slate-600">Ejes de rueda</h4>
+                <h4 className="font-semibold text-xs text-blue-400">Ejes de rueda</h4>
                 <Button variant="outline" size="sm" className="h-6 text-xs px-2" onClick={() => addAxle(ci)}>
                   + Eje
                 </Button>
@@ -394,7 +394,7 @@ export default function AccionesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b text-left bg-slate-50">
+                    <tr className="border-b border-slate-700 text-left bg-slate-800">
                       <th className="px-1 py-1 font-medium w-8">#</th>
                       <th className="px-1 py-1 font-medium">dx (mm)</th>
                       <th className="px-1 py-1 font-medium">Pw (kN)</th>
@@ -410,8 +410,8 @@ export default function AccionesPage() {
                       const isManualPv = pvOverrides.has(pvKey);
                       const autoPv = axle.Pw * (1 + crane.phi);
                       return (
-                        <tr key={ai} className="border-b">
-                          <td className="px-1 py-0.5 font-medium text-slate-500">{ai + 1}</td>
+                        <tr key={ai} className="border-b border-slate-700 bg-slate-900">
+                          <td className="px-1 py-0.5 font-medium text-slate-400">{ai + 1}</td>
                           <td className="px-1 py-0.5">
                             <Input
                               type="number"
@@ -456,7 +456,7 @@ export default function AccionesPage() {
                             <div className="flex items-center gap-1">
                               <Input
                                 type="number"
-                                className={`h-6 w-16 text-xs ${isManualPv ? "border-amber-400 bg-amber-50" : ""}`}
+                                className={`h-6 w-16 text-xs ${isManualPv ? "border-amber-400 bg-amber-950/50" : ""}`}
                                 value={Number(axle.Pv.toFixed(1))}
                                 onChange={(e) =>
                                   updateAxlePvManual(ci, ai, Number(e.target.value))
@@ -465,8 +465,8 @@ export default function AccionesPage() {
                               <span
                                 className={`inline-flex items-center px-1 py-0 rounded text-[9px] font-medium cursor-pointer select-none ${
                                   isManualPv
-                                    ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                                    : "bg-blue-100 text-blue-600"
+                                    ? "bg-amber-950/50 text-amber-400 hover:bg-amber-900/50"
+                                    : "bg-blue-950/50 text-blue-400"
                                 }`}
                                 onClick={() => {
                                   if (isManualPv) resetPvToAuto(ci, ai);
@@ -551,7 +551,7 @@ export default function AccionesPage() {
             <div className="overflow-x-auto max-h-72">
               <table className="w-full text-xs">
                 <thead className="sticky top-0">
-                  <tr className="border-b text-left bg-muted/50">
+                  <tr className="border-b border-slate-700 text-left bg-slate-800">
                     <th className="px-1 py-1 font-medium">Codigo</th>
                     <th className="px-1 py-1 font-medium">Q (kN)</th>
                     <th className="px-1 py-1 font-medium">Lp (m)</th>
@@ -566,7 +566,7 @@ export default function AccionesPage() {
                 </thead>
                 <tbody>
                   {filteredTemplates.map((t) => (
-                    <tr key={t.code} className="border-b hover:bg-muted/30">
+                    <tr key={t.code} className="border-b border-slate-700 bg-slate-900 hover:bg-slate-800/50">
                       <td className="px-1 py-0.5 font-medium">{t.code}</td>
                       <td className="px-1 py-0.5">{t.Q}</td>
                       <td className="px-1 py-0.5">{t.Lp}</td>
@@ -575,7 +575,7 @@ export default function AccionesPage() {
                       <td className="px-1 py-0.5">{t.axles}</td>
                       <td className="px-1 py-0.5">{t.aw}</td>
                       <td className="px-1 py-0.5">{t.cmaa}</td>
-                      <td className="px-1 py-0.5 text-muted-foreground">
+                      <td className="px-1 py-0.5 text-slate-400">
                         {t.application}
                       </td>
                       <td className="px-1 py-0.5">

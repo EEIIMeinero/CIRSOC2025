@@ -53,9 +53,9 @@ export default function MemoriaPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <div className="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">
                 <svg
-                  className="h-8 w-8 text-muted-foreground"
+                  className="h-8 w-8 text-slate-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -71,7 +71,7 @@ export default function MemoriaPage() {
               <h3 className="text-lg font-semibold mb-2">
                 Sin resultados para generar la memoria
               </h3>
-              <p className="text-sm text-muted-foreground max-w-md">
+              <p className="text-sm text-slate-400 max-w-md">
                 Ejecute el calculo primero desde el Modulo 5. Una vez
                 obtenidos los resultados, podra generar la memoria de calculo
                 completa en formato PDF o exportar los datos a Excel.
@@ -91,44 +91,44 @@ export default function MemoriaPage() {
           <CardTitle>Memoria de Calculo</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg border bg-blue-50 p-4">
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
               <div>
-                <span className="text-muted-foreground">Proyecto:</span>{" "}
+                <span className="text-slate-400">Proyecto:</span>{" "}
                 <span className="font-medium">{general.projectName}</span>
               </div>
               {general.expediente && (
                 <div>
-                  <span className="text-muted-foreground">Expediente:</span>{" "}
+                  <span className="text-slate-400">Expediente:</span>{" "}
                   <span className="font-medium">{general.expediente}</span>
                 </div>
               )}
               {general.engineer && (
                 <div>
-                  <span className="text-muted-foreground">Profesional:</span>{" "}
+                  <span className="text-slate-400">Profesional:</span>{" "}
                   <span className="font-medium">{general.engineer}</span>
                 </div>
               )}
               <div>
-                <span className="text-muted-foreground">Material:</span>{" "}
+                <span className="text-slate-400">Material:</span>{" "}
                 <span className="font-medium">{general.material.name}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Vanos:</span>{" "}
+                <span className="text-slate-400">Vanos:</span>{" "}
                 <span className="font-medium">{spans.length}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Seccion:</span>{" "}
+                <span className="text-slate-400">Seccion:</span>{" "}
                 <span className="font-medium">
                   {section ? `Tipo ${section.type}` : "—"}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground">Gruas:</span>{" "}
+                <span className="text-slate-400">Gruas:</span>{" "}
                 <span className="font-medium">{cranes.length}</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Fecha:</span>{" "}
+                <span className="text-slate-400">Fecha:</span>{" "}
                 <span className="font-medium">{general.date}</span>
               </div>
             </div>
@@ -146,14 +146,14 @@ export default function MemoriaPage() {
             {MEMORIA_SECTIONS.map((sec, idx) => (
               <div
                 key={sec.id}
-                className="flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/30 transition-colors"
+                className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 hover:bg-slate-800 transition-colors"
               >
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex-shrink-0">
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-950 text-blue-400 text-xs font-bold flex-shrink-0">
                   {idx + 1}
                 </span>
                 <div>
-                  <div className="font-semibold text-sm">{sec.title}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="font-semibold text-sm text-slate-200">{sec.title}</div>
+                  <div className="text-xs text-slate-400">
                     {sec.desc}
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export default function MemoriaPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left bg-muted/50">
+                <tr className="border-b border-slate-700 text-left bg-slate-800">
                   <th className="p-2 font-medium">Vano</th>
                   <th className="p-2 font-medium">L (m)</th>
                   <th className="p-2 font-medium text-center">eta_max</th>
@@ -181,7 +181,7 @@ export default function MemoriaPage() {
               </thead>
               <tbody>
                 {spanResults.map((r) => (
-                  <tr key={r.spanIndex} className="border-b">
+                  <tr key={r.spanIndex} className="border-b border-slate-700 bg-slate-900">
                     <td className="p-2 font-medium">
                       Vano {r.spanIndex + 1}
                     </td>
@@ -195,10 +195,10 @@ export default function MemoriaPage() {
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           r.status === "ok"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-green-950/50 text-green-400"
                             : r.status === "warning"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-yellow-950/50 text-yellow-400"
+                            : "bg-red-950/50 text-red-400"
                         }`}
                       >
                         {r.status === "ok"

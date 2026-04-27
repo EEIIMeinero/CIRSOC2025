@@ -269,7 +269,7 @@ export default function CalculoPage() {
               onChange={(e) =>
                 setSettings({ enableFatigue: e.target.checked })
               }
-              className="h-3.5 w-3.5 rounded border-gray-300"
+              className="h-3.5 w-3.5 rounded border-slate-600"
             />
             <span className="text-xs">
               Habilitar verificacion por fatiga (AISC Apendice 3 / CIRSOC 301 Apendice F)
@@ -287,7 +287,7 @@ export default function CalculoPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b text-left bg-muted/50">
+                <tr className="border-b border-slate-700 text-left bg-slate-800">
                   <th className="px-1 py-1 font-medium">ID</th>
                   <th className="px-1 py-1 font-medium">Nombre</th>
                   <th className="px-1 py-1 font-medium">gamma_D</th>
@@ -297,7 +297,7 @@ export default function CalculoPage() {
               </thead>
               <tbody>
                 {settings.combinations.map((combo, idx) => (
-                  <tr key={combo.id} className="border-b">
+                  <tr key={combo.id} className="border-b border-slate-700 bg-slate-900">
                     <td className="px-1 py-0.5 font-medium">{combo.id}</td>
                     <td className="px-1 py-0.5">{combo.name}</td>
                     <td className="px-1 py-0.5">
@@ -360,12 +360,12 @@ export default function CalculoPage() {
       <Card>
         <CardContent className="pt-3 px-3 pb-3">
           {error && (
-            <div className="mb-2 p-2 rounded bg-red-50 border border-red-200 text-red-800 text-xs">
+            <div className="mb-2 p-2 rounded bg-red-950/50 border border-red-800 text-red-400 text-xs">
               {error}
             </div>
           )}
           {successMsg && (
-            <div className="mb-2 p-2 rounded bg-green-50 border border-green-200 text-green-800 text-xs">
+            <div className="mb-2 p-2 rounded bg-green-950/50 border border-green-800 text-green-400 text-xs">
               {successMsg}
             </div>
           )}
@@ -374,8 +374,8 @@ export default function CalculoPage() {
           {suggestion && (
             <div className={`mb-2 p-2 rounded border text-xs ${
               suggestion.reason === "undersize"
-                ? "bg-red-50 border-red-300 text-red-900"
-                : "bg-amber-50 border-amber-300 text-amber-900"
+                ? "bg-red-950/50 border-red-800 text-red-400"
+                : "bg-amber-950/50 border-amber-800 text-amber-400"
             }`}>
               <div className="flex items-center justify-between gap-2">
                 <div>
@@ -405,12 +405,12 @@ export default function CalculoPage() {
               {isCalculated ? (
                 <div className="flex items-center gap-1.5 text-xs">
                   <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-                  <span className="text-green-700 font-medium">Calculo realizado</span>
+                  <span className="text-green-400 font-medium">Calculo realizado</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-xs">
                   <div className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
-                  <span className="text-yellow-700 font-medium">Calculo pendiente</span>
+                  <span className="text-yellow-400 font-medium">Calculo pendiente</span>
                 </div>
               )}
             </div>

@@ -64,17 +64,17 @@ export default function DatosGeneralesPage() {
             onClick={() => handleSelectMaterial(mat)}
             className={`cursor-pointer rounded-lg border-2 p-3 transition-colors ${
               general.material.id === mat.id
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 hover:border-blue-300"
+                ? "border-blue-500 bg-blue-950/50"
+                : "border-slate-700 hover:border-blue-300"
             }`}
           >
-            <div className="font-semibold text-sm">{mat.name}</div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="font-semibold text-sm text-slate-200">{mat.name}</div>
+            <div className="text-xs text-slate-400 mt-1">
               Fy = {mat.Fy} MPa | Fu = {mat.Fu} MPa
             </div>
-            <div className="text-xs text-muted-foreground">{mat.norm}</div>
+            <div className="text-xs text-slate-400">{mat.norm}</div>
             {mat.notes && (
-              <div className="text-xs text-muted-foreground italic mt-0.5">
+              <div className="text-xs text-slate-500 italic mt-0.5">
                 {mat.notes}
               </div>
             )}
@@ -87,68 +87,74 @@ export default function DatosGeneralesPage() {
   return (
     <div className="space-y-6">
       {/* Identificacion del Proyecto */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Identificacion del Proyecto</CardTitle>
+          <CardTitle className="text-blue-400">Identificacion del Proyecto</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="projectName">Nombre del proyecto</Label>
+              <Label htmlFor="projectName" className="text-slate-400">Nombre del proyecto</Label>
               <Input
                 id="projectName"
+                className="input-blueprint"
                 value={general.projectName}
                 onChange={(e) => setGeneral({ projectName: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="expediente">Expediente</Label>
+              <Label htmlFor="expediente" className="text-slate-400">Expediente</Label>
               <Input
                 id="expediente"
+                className="input-blueprint"
                 value={general.expediente ?? ""}
                 onChange={(e) => setGeneral({ expediente: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="engineer">Profesional responsable</Label>
+              <Label htmlFor="engineer" className="text-slate-400">Profesional responsable</Label>
               <Input
                 id="engineer"
+                className="input-blueprint"
                 value={general.engineer ?? ""}
                 onChange={(e) => setGeneral({ engineer: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="license">Matricula</Label>
+              <Label htmlFor="license" className="text-slate-400">Matricula</Label>
               <Input
                 id="license"
+                className="input-blueprint"
                 value={general.license ?? ""}
                 onChange={(e) => setGeneral({ license: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">Empresa</Label>
+              <Label htmlFor="company" className="text-slate-400">Empresa</Label>
               <Input
                 id="company"
+                className="input-blueprint"
                 value={general.company ?? ""}
                 onChange={(e) => setGeneral({ company: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Fecha</Label>
+              <Label htmlFor="date" className="text-slate-400">Fecha</Label>
               <Input
                 id="date"
                 type="date"
+                className="input-blueprint"
                 value={general.date}
                 onChange={(e) => setGeneral({ date: e.target.value })}
               />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="comments">Comentarios</Label>
+            <Label htmlFor="comments" className="text-slate-400">Comentarios</Label>
             <textarea
               id="comments"
               rows={3}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
               value={general.comments ?? ""}
               onChange={(e) => setGeneral({ comments: e.target.value })}
             />
@@ -157,13 +163,13 @@ export default function DatosGeneralesPage() {
       </Card>
 
       {/* Seleccion de Material */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Material</CardTitle>
+          <CardTitle className="text-blue-400">Material</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Tabs value={materialTab} onValueChange={setMaterialTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-4 bg-slate-800">
               <TabsTrigger value="AR">Argentina</TabsTrigger>
               <TabsTrigger value="US">USA</TabsTrigger>
               <TabsTrigger value="EU">Europa</TabsTrigger>
@@ -181,37 +187,41 @@ export default function DatosGeneralesPage() {
             <TabsContent value="CUSTOM" className="mt-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="customFy">Fy (MPa)</Label>
+                  <Label htmlFor="customFy" className="text-slate-400">Fy (MPa)</Label>
                   <Input
                     id="customFy"
                     type="number"
+                    className="input-blueprint"
                     value={customFy}
                     onChange={(e) => setCustomFy(Number(e.target.value))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customFu">Fu (MPa)</Label>
+                  <Label htmlFor="customFu" className="text-slate-400">Fu (MPa)</Label>
                   <Input
                     id="customFu"
                     type="number"
+                    className="input-blueprint"
                     value={customFu}
                     onChange={(e) => setCustomFu(Number(e.target.value))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customE">E (MPa)</Label>
+                  <Label htmlFor="customE" className="text-slate-400">E (MPa)</Label>
                   <Input
                     id="customE"
                     type="number"
+                    className="input-blueprint"
                     value={customE}
                     onChange={(e) => setCustomE(Number(e.target.value))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customG">G (MPa)</Label>
+                  <Label htmlFor="customG" className="text-slate-400">G (MPa)</Label>
                   <Input
                     id="customG"
                     type="number"
+                    className="input-blueprint"
                     value={customG}
                     onChange={(e) => setCustomG(Number(e.target.value))}
                   />
@@ -224,30 +234,30 @@ export default function DatosGeneralesPage() {
           </Tabs>
 
           {/* Propiedades del material seleccionado */}
-          <div className="rounded-lg border bg-blue-50 p-4 mt-4">
-            <h4 className="font-semibold text-sm mb-2">
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 mt-4">
+            <h4 className="font-semibold text-sm mb-2 text-slate-200">
               Material seleccionado: {general.material.name}
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
               <div>
-                <span className="text-muted-foreground">Fy:</span>{" "}
-                <span className="font-medium">{general.material.Fy} MPa</span>
+                <span className="text-slate-400">Fy:</span>{" "}
+                <span className="font-medium text-blue-300 mono">{general.material.Fy} MPa</span>
               </div>
               <div>
-                <span className="text-muted-foreground">Fu:</span>{" "}
-                <span className="font-medium">{general.material.Fu} MPa</span>
+                <span className="text-slate-400">Fu:</span>{" "}
+                <span className="font-medium text-blue-300 mono">{general.material.Fu} MPa</span>
               </div>
               <div>
-                <span className="text-muted-foreground">E:</span>{" "}
-                <span className="font-medium">{general.material.E} MPa</span>
+                <span className="text-slate-400">E:</span>{" "}
+                <span className="font-medium text-blue-300 mono">{general.material.E} MPa</span>
               </div>
               <div>
-                <span className="text-muted-foreground">G:</span>{" "}
-                <span className="font-medium">{general.material.G} MPa</span>
+                <span className="text-slate-400">G:</span>{" "}
+                <span className="font-medium text-blue-300 mono">{general.material.G} MPa</span>
               </div>
               <div>
-                <span className="text-muted-foreground">gamma:</span>{" "}
-                <span className="font-medium">
+                <span className="text-slate-400">gamma:</span>{" "}
+                <span className="font-medium text-blue-300 mono">
                   {general.material.gamma} kN/m3
                 </span>
               </div>
@@ -257,14 +267,14 @@ export default function DatosGeneralesPage() {
       </Card>
 
       {/* Tipo de grua y Clase CMAA */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Tipo de Grua y Clasificacion</CardTitle>
+          <CardTitle className="text-blue-400">Tipo de Grua y Clasificacion</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label>Tipo de grua</Label>
+              <Label className="text-slate-400">Tipo de grua</Label>
               <Select
                 value={general.craneType}
                 onValueChange={(v) => setGeneral({ craneType: v as CraneType })}
@@ -283,7 +293,7 @@ export default function DatosGeneralesPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Clase CMAA</Label>
+              <Label className="text-slate-400">Clase CMAA</Label>
               <Select
                 value={general.cmaaClass}
                 onValueChange={(v) =>
@@ -305,44 +315,44 @@ export default function DatosGeneralesPage() {
               </Select>
             </div>
           </div>
-          <div className="rounded-lg border p-3 bg-muted/50 text-sm">
+          <div className="rounded-lg border border-slate-700 p-3 bg-slate-800/50 text-sm text-slate-300">
             {CMAA_DESCRIPTIONS[general.cmaaClass]}
           </div>
         </CardContent>
       </Card>
 
       {/* Normativa */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Normativa Aplicable</CardTitle>
+          <CardTitle className="text-blue-400">Normativa Aplicable</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2 p-3 rounded-lg border">
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-slate-700 bg-slate-800/50">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="font-medium">CIRSOC 301-2018</span>
-              <span className="text-muted-foreground">
+              <span className="font-medium text-slate-200">CIRSOC 301-2018</span>
+              <span className="text-slate-400">
                 — Estructuras de acero
               </span>
             </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg border">
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-slate-700 bg-slate-800/50">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="font-medium">CIRSOC 101-2025</span>
-              <span className="text-muted-foreground">
+              <span className="font-medium text-slate-200">CIRSOC 101-2025</span>
+              <span className="text-slate-400">
                 — Cargas y combinaciones
               </span>
             </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg border">
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-slate-700 bg-slate-800/50">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="font-medium">AISC 360-22</span>
-              <span className="text-muted-foreground">
+              <span className="font-medium text-slate-200">AISC 360-22</span>
+              <span className="text-slate-400">
                 — Specification for Structural Steel Buildings
               </span>
             </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg border">
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-slate-700 bg-slate-800/50">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="font-medium">AISC DG7-2019</span>
-              <span className="text-muted-foreground">
+              <span className="font-medium text-slate-200">AISC DG7-2019</span>
+              <span className="text-slate-400">
                 — Industrial Buildings &amp; Crane Runway Girders
               </span>
             </div>
