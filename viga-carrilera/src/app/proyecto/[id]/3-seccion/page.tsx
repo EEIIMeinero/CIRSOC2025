@@ -292,9 +292,9 @@ export default function SeccionPage() {
       </Card>
 
       {/* Dimensiones segun tipo */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-blue-400">
             Dimensiones — {SECTION_TYPES.find((s) => s.type === selectedType)?.label}
           </CardTitle>
         </CardHeader>
@@ -337,7 +337,7 @@ export default function SeccionPage() {
                                 }`}
                               >
                                 <span className="font-medium">{p.name}</span>
-                                <span className="text-xs text-muted-foreground ml-2">
+                                <span className="text-xs text-slate-400 ml-2">
                                   d={p.d} bf={p.bf} tf={p.tf} tw={p.tw} — {p.weight} kg/m
                                 </span>
                               </div>
@@ -346,7 +346,7 @@ export default function SeccionPage() {
                         );
                       })}
                       {filteredProfiles.length === 0 && (
-                        <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                        <div className="px-3 py-4 text-sm text-slate-400 text-center">
                           No se encontraron perfiles
                         </div>
                       )}
@@ -365,28 +365,28 @@ export default function SeccionPage() {
               {profileName && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                   <div className="text-sm">
-                    <span className="text-muted-foreground">d = </span>
-                    <span className="font-semibold">{dims.d} mm</span>
+                    <span className="text-slate-400">d = </span>
+                    <span className="font-semibold text-blue-300 mono">{dims.d} mm</span>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">bf = </span>
-                    <span className="font-semibold">{dims.bfs} mm</span>
+                    <span className="text-slate-400">bf = </span>
+                    <span className="font-semibold text-blue-300 mono">{dims.bfs} mm</span>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">tf = </span>
-                    <span className="font-semibold">{dims.tfs} mm</span>
+                    <span className="text-slate-400">tf = </span>
+                    <span className="font-semibold text-blue-300 mono">{dims.tfs} mm</span>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">tw = </span>
-                    <span className="font-semibold">{dims.tw} mm</span>
+                    <span className="text-slate-400">tw = </span>
+                    <span className="font-semibold text-blue-300 mono">{dims.tw} mm</span>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">h = </span>
-                    <span className="font-semibold">{dims.h} mm</span>
+                    <span className="text-slate-400">h = </span>
+                    <span className="font-semibold text-blue-300 mono">{dims.h} mm</span>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Peso = </span>
-                    <span className="font-semibold">{(calcProps.wDL / 9.81 * 1000).toFixed(1)} kg/m</span>
+                    <span className="text-slate-400">Peso = </span>
+                    <span className="font-semibold text-blue-300 mono">{(calcProps.wDL / 9.81 * 1000).toFixed(1)} kg/m</span>
                   </div>
                 </div>
               )}
@@ -443,7 +443,7 @@ export default function SeccionPage() {
                   type="number"
                   value={dims.tfs + dims.h + dims.tfi}
                   disabled
-                  className="bg-muted"
+                  className="bg-slate-800 text-slate-400"
                 />
               </div>
             </div>
@@ -505,7 +505,7 @@ export default function SeccionPage() {
                   type="number"
                   value={dims.tfs + dims.h + dims.tfi}
                   disabled
-                  className="bg-muted"
+                  className="bg-slate-800 text-slate-400"
                 />
               </div>
             </div>
@@ -513,7 +513,7 @@ export default function SeccionPage() {
 
           {selectedType === "K" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-400">
                 Ingrese manualmente todas las propiedades de la seccion.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -630,8 +630,8 @@ export default function SeccionPage() {
                 </div>
               </div>
               {/* Dimensions for visualization in K mode */}
-              <div className="pt-2 border-t">
-                <p className="text-sm text-muted-foreground mb-3">
+              <div className="pt-2 border-t border-slate-700">
+                <p className="text-sm text-slate-400 mb-3">
                   Dimensiones para visualizacion (opcional):
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -681,7 +681,7 @@ export default function SeccionPage() {
           {/* Type D: Rolled I + UPN channel */}
           {selectedType === "D" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Perfil I laminado con canal UPN soldado sobre ala superior.</p>
+              <p className="text-sm text-slate-400">Perfil I laminado con canal UPN soldado sobre ala superior.</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Perfil base (I)</Label>
@@ -695,8 +695,8 @@ export default function SeccionPage() {
                     {showProfileDropdown && (
                       <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
-                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
-                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-700">
+                            {p.name} <span className="text-xs text-slate-400">d={p.d} bf={p.bf}</span>
                           </div>
                         ))}
                       </div>
@@ -724,7 +724,7 @@ export default function SeccionPage() {
           {/* Type E: Rolled I + cover plate */}
           {selectedType === "E" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Perfil I laminado con chapa PL soldada sobre ala superior.</p>
+              <p className="text-sm text-slate-400">Perfil I laminado con chapa PL soldada sobre ala superior.</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-2 col-span-2 md:col-span-1">
                   <Label>Perfil base (I)</Label>
@@ -738,8 +738,8 @@ export default function SeccionPage() {
                     {showProfileDropdown && (
                       <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
-                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
-                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-700">
+                            {p.name} <span className="text-xs text-slate-400">d={p.d} bf={p.bf}</span>
                           </div>
                         ))}
                       </div>
@@ -763,7 +763,7 @@ export default function SeccionPage() {
           {/* Type F: Rolled I + surge plate */}
           {selectedType === "F" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Perfil I con chapa horizontal (surge plate) soldada lateral al ala superior.</p>
+              <p className="text-sm text-slate-400">Perfil I con chapa horizontal (surge plate) soldada lateral al ala superior.</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-2 col-span-2 md:col-span-1">
                   <Label>Perfil base (I)</Label>
@@ -777,8 +777,8 @@ export default function SeccionPage() {
                     {showProfileDropdown && (
                       <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
-                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
-                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-700">
+                            {p.name} <span className="text-xs text-slate-400">d={p.d} bf={p.bf}</span>
                           </div>
                         ))}
                       </div>
@@ -800,7 +800,7 @@ export default function SeccionPage() {
           {/* Type G: Main + surge plate + auxiliary beam */}
           {selectedType === "G" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Viga principal + chapa horizontal (surge plate) + viga auxiliar lateral.</p>
+              <p className="text-sm text-slate-400">Viga principal + chapa horizontal (surge plate) + viga auxiliar lateral.</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Perfil principal (I)</Label>
@@ -814,8 +814,8 @@ export default function SeccionPage() {
                     {showProfileDropdown && (
                       <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
-                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
-                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-700">
+                            {p.name} <span className="text-xs text-slate-400">d={p.d} bf={p.bf}</span>
                           </div>
                         ))}
                       </div>
@@ -844,7 +844,7 @@ export default function SeccionPage() {
           {/* Type H: Simple box section */}
           {selectedType === "H" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Seccion cajon soldada con dos almas, dos alas.</p>
+              <p className="text-sm text-slate-400">Seccion cajon soldada con dos almas, dos alas.</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
                 <DimInput label="tw - Espesor alma (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
@@ -853,7 +853,7 @@ export default function SeccionPage() {
                 <DimInput label="bInt - Ancho interior (mm)" value={bInt} onChange={setBInt} />
                 <div className="space-y-2">
                   <Label>d - Altura total (mm)</Label>
-                  <Input type="number" value={dims.tfs + dims.h + dims.tfi} disabled className="bg-muted" />
+                  <Input type="number" value={dims.tfs + dims.h + dims.tfi} disabled className="bg-slate-800 text-slate-400" />
                 </div>
               </div>
             </div>
@@ -862,7 +862,7 @@ export default function SeccionPage() {
           {/* Type I: Box with lattice */}
           {selectedType === "I" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Seccion cajon con celosia lateral (alma tipo Vierendeel o Warren).</p>
+              <p className="text-sm text-slate-400">Seccion cajon con celosia lateral (alma tipo Vierendeel o Warren).</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <DimInput label="h - Altura alma (mm)" value={dims.h} onChange={(v) => updateDim("h", v)} />
                 <DimInput label="tw - Espesor equiv. alma (mm)" value={dims.tw} onChange={(v) => updateDim("tw", v)} />
@@ -871,7 +871,7 @@ export default function SeccionPage() {
                 <DimInput label="bInt - Ancho interior (mm)" value={bInt} onChange={setBInt} />
                 <div className="space-y-2">
                   <Label>d - Altura total (mm)</Label>
-                  <Input type="number" value={dims.tfs + dims.h + dims.tfi} disabled className="bg-muted" />
+                  <Input type="number" value={dims.tfs + dims.h + dims.tfi} disabled className="bg-slate-800 text-slate-400" />
                 </div>
               </div>
             </div>
@@ -880,7 +880,7 @@ export default function SeccionPage() {
           {/* Type J: Twin beam system */}
           {selectedType === "J" && (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Sistema birriel — dos vigas paralelas vinculadas por arriostramientos.</p>
+              <p className="text-sm text-slate-400">Sistema birriel — dos vigas paralelas vinculadas por arriostramientos.</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="space-y-2 col-span-2 md:col-span-1">
                   <Label>Perfil de cada viga</Label>
@@ -894,8 +894,8 @@ export default function SeccionPage() {
                     {showProfileDropdown && (
                       <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
-                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
-                            {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
+                          <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-slate-700">
+                            {p.name} <span className="text-xs text-slate-400">d={p.d} bf={p.bf}</span>
                           </div>
                         ))}
                       </div>
@@ -906,10 +906,10 @@ export default function SeccionPage() {
               </div>
               {profileName && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                  <div className="text-sm"><span className="text-muted-foreground">d = </span><span className="font-semibold">{dims.d} mm</span></div>
-                  <div className="text-sm"><span className="text-muted-foreground">bf = </span><span className="font-semibold">{dims.bfs} mm</span></div>
-                  <div className="text-sm"><span className="text-muted-foreground">tf = </span><span className="font-semibold">{dims.tfs} mm</span></div>
-                  <div className="text-sm"><span className="text-muted-foreground">tw = </span><span className="font-semibold">{dims.tw} mm</span></div>
+                  <div className="text-sm"><span className="text-slate-400">d = </span><span className="font-semibold text-blue-300 mono">{dims.d} mm</span></div>
+                  <div className="text-sm"><span className="text-slate-400">bf = </span><span className="font-semibold text-blue-300 mono">{dims.bfs} mm</span></div>
+                  <div className="text-sm"><span className="text-slate-400">tf = </span><span className="font-semibold text-blue-300 mono">{dims.tfs} mm</span></div>
+                  <div className="text-sm"><span className="text-slate-400">tw = </span><span className="font-semibold text-blue-300 mono">{dims.tw} mm</span></div>
                 </div>
               )}
             </div>
@@ -920,7 +920,7 @@ export default function SeccionPage() {
           </Button>
 
           {section && (
-            <span className="ml-3 text-sm text-green-600 font-medium">
+            <span className="ml-3 text-sm text-green-400 font-medium">
               Seccion aplicada: Tipo {section.type}
               {section.profileName ? ` — ${section.profileName}` : ""}
             </span>
@@ -932,9 +932,9 @@ export default function SeccionPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* SVG Section visualization */}
         {hasValidDims && (
-          <Card className="lg:col-span-1">
+          <Card className="lg:col-span-1 bg-slate-900 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-base">Seccion Transversal</CardTitle>
+              <CardTitle className="text-base text-blue-400">Seccion Transversal</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center">
               <SvgSection
@@ -950,9 +950,9 @@ export default function SeccionPage() {
         )}
 
         {/* Properties table */}
-        <Card className={hasValidDims ? "lg:col-span-2" : "lg:col-span-3"}>
+        <Card className={`bg-slate-900 border-slate-700 ${hasValidDims ? "lg:col-span-2" : "lg:col-span-3"}`}>
           <CardHeader>
-            <CardTitle>Propiedades de la Seccion</CardTitle>
+            <CardTitle className="text-blue-400">Propiedades de la Seccion</CardTitle>
           </CardHeader>
           <CardContent>
             {hasValidProps ? (
@@ -971,7 +971,7 @@ export default function SeccionPage() {
                 <PropCell label="iy_eff" value={(calcProps.iy_eff ?? 0).toFixed(1)} unit="mm" />
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground text-center py-6">
+              <div className="text-sm text-slate-400 text-center py-6">
                 {selectedType === "A"
                   ? "Seleccione un perfil de la base de datos para ver las propiedades."
                   : selectedType === "K"
@@ -985,20 +985,20 @@ export default function SeccionPage() {
 
       {/* Compactness check */}
       {selectedType !== "K" && hasValidDims && dims.tfs > 0 && dims.tw > 0 && (
-        <Card>
+        <Card className="bg-slate-900 border-slate-700">
           <CardHeader>
-            <CardTitle>Clasificacion de Compacidad — CIRSOC 301 Tabla B4.1b</CardTitle>
+            <CardTitle className="text-blue-400">Clasificacion de Compacidad — CIRSOC 301 Tabla B4.1b</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-200">
               <div className="space-y-2">
-                <div className="font-semibold">Ala (Flange)</div>
+                <div className="font-semibold text-slate-200">Ala (Flange)</div>
                 <div>
-                  <span className="text-muted-foreground">lambda_f = </span>
+                  <span className="text-slate-400">lambda_f = </span>
                   {compactness.lambda_f.toFixed(2)}
-                  <span className="text-muted-foreground"> | lambda_pf = </span>
+                  <span className="text-slate-400"> | lambda_pf = </span>
                   {compactness.lambda_pf.toFixed(2)}
-                  <span className="text-muted-foreground"> | lambda_rf = </span>
+                  <span className="text-slate-400"> | lambda_rf = </span>
                   {compactness.lambda_rf.toFixed(2)}
                 </div>
                 <div>
@@ -1006,10 +1006,10 @@ export default function SeccionPage() {
                   <span
                     className={`font-bold ${
                       compactness.flangeClass === "compact"
-                        ? "text-green-600"
+                        ? "text-green-400"
                         : compactness.flangeClass === "noncompact"
-                        ? "text-yellow-600"
-                        : "text-red-600"
+                        ? "text-amber-400"
+                        : "text-red-400"
                     }`}
                   >
                     {compactness.flangeClass === "compact"
@@ -1021,13 +1021,13 @@ export default function SeccionPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="font-semibold">Alma (Web)</div>
+                <div className="font-semibold text-slate-200">Alma (Web)</div>
                 <div>
-                  <span className="text-muted-foreground">lambda_w = </span>
+                  <span className="text-slate-400">lambda_w = </span>
                   {compactness.lambda_w.toFixed(2)}
-                  <span className="text-muted-foreground"> | lambda_pw = </span>
+                  <span className="text-slate-400"> | lambda_pw = </span>
                   {compactness.lambda_pw.toFixed(2)}
-                  <span className="text-muted-foreground"> | lambda_rw = </span>
+                  <span className="text-slate-400"> | lambda_rw = </span>
                   {compactness.lambda_rw.toFixed(2)}
                 </div>
                 <div>
@@ -1035,10 +1035,10 @@ export default function SeccionPage() {
                   <span
                     className={`font-bold ${
                       compactness.webClass === "compact"
-                        ? "text-green-600"
+                        ? "text-green-400"
                         : compactness.webClass === "noncompact"
-                        ? "text-yellow-600"
-                        : "text-red-600"
+                        ? "text-amber-400"
+                        : "text-red-400"
                     }`}
                   >
                     {compactness.webClass === "compact"
@@ -1056,9 +1056,9 @@ export default function SeccionPage() {
       )}
 
       {/* Carril */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Configuracion del Carril</CardTitle>
+          <CardTitle className="text-blue-400">Configuracion del Carril</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1185,10 +1185,10 @@ export default function SeccionPage() {
           {/* Summary of selected rail */}
           {rail.type !== "none" && rail.hr > 0 && (
             <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 text-sm grid grid-cols-2 md:grid-cols-4 gap-2">
-              <div><span className="text-muted-foreground">hr = </span><span className="font-semibold">{rail.hr} mm</span></div>
-              <div><span className="text-muted-foreground">br = </span><span className="font-semibold">{rail.br} mm</span></div>
-              <div><span className="text-muted-foreground">tw_r = </span><span className="font-semibold">{rail.tw_r} mm</span></div>
-              <div><span className="text-muted-foreground">e = </span><span className="font-semibold">{rail.eccentricity} mm</span></div>
+              <div><span className="text-slate-400">hr = </span><span className="font-semibold text-blue-300 mono">{rail.hr} mm</span></div>
+              <div><span className="text-slate-400">br = </span><span className="font-semibold text-blue-300 mono">{rail.br} mm</span></div>
+              <div><span className="text-slate-400">tw_r = </span><span className="font-semibold text-blue-300 mono">{rail.tw_r} mm</span></div>
+              <div><span className="text-slate-400">e = </span><span className="font-semibold text-blue-300 mono">{rail.eccentricity} mm</span></div>
             </div>
           )}
         </CardContent>
@@ -1200,9 +1200,9 @@ export default function SeccionPage() {
 /** Small helper component for displaying a property cell */
 function PropCell({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (
-    <div className="rounded-lg border p-3">
-      <div className="text-muted-foreground text-xs">{label} ({unit})</div>
-      <div className="font-semibold">{value}</div>
+    <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-3">
+      <div className="text-slate-400 text-xs">{label} ({unit})</div>
+      <div className="font-semibold text-blue-300 mono">{value}</div>
     </div>
   );
 }
@@ -1211,8 +1211,8 @@ function PropCell({ label, value, unit }: { label: string; value: string; unit: 
 function DimInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
-      <Input type="number" value={value} onChange={(e) => onChange(Number(e.target.value))} />
+      <Label className="text-slate-400">{label}</Label>
+      <Input type="number" className="input-blueprint" value={value} onChange={(e) => onChange(Number(e.target.value))} />
     </div>
   );
 }
