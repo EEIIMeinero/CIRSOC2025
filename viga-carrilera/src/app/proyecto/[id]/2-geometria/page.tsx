@@ -51,13 +51,13 @@ export default function GeometriaPage() {
   return (
     <div className="space-y-6">
       {/* Cantidad de Vanos */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Configuracion de Vanos</CardTitle>
+          <CardTitle className="text-blue-400">Configuracion de Vanos</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <Label>Cantidad de vanos:</Label>
+            <Label className="text-slate-400">Cantidad de vanos:</Label>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -69,7 +69,7 @@ export default function GeometriaPage() {
               >
                 -
               </Button>
-              <span className="w-10 text-center font-semibold text-lg">
+              <span className="w-10 text-center font-semibold text-lg text-slate-200">
                 {spans.length}
               </span>
               <Button
@@ -81,9 +81,9 @@ export default function GeometriaPage() {
                 +
               </Button>
             </div>
-            <div className="ml-auto text-sm text-muted-foreground">
+            <div className="ml-auto text-sm text-slate-400">
               Longitud total:{" "}
-              <span className="font-semibold text-foreground">
+              <span className="font-semibold text-blue-300 mono">
                 {totalLength.toFixed(2)} m
               </span>
             </div>
@@ -93,17 +93,17 @@ export default function GeometriaPage() {
             {spans.map((span) => (
               <div
                 key={span.index}
-                className="flex items-center gap-3 rounded-lg border p-3"
+                className="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3"
               >
-                <span className="font-medium text-sm w-24">
+                <span className="font-medium text-sm w-24 text-slate-200">
                   Vano {span.index + 1}
                 </span>
-                <Label className="text-sm">L (m):</Label>
+                <Label className="text-sm text-slate-400">L (m):</Label>
                 <Input
                   type="number"
                   step={0.1}
                   min={0.5}
-                  className="w-28"
+                  className="w-28 input-blueprint"
                   value={span.length}
                   onChange={(e) =>
                     updateSpanLength(span.index, Number(e.target.value))
@@ -113,7 +113,7 @@ export default function GeometriaPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-red-500 hover:text-red-700 ml-auto"
+                    className="text-red-400 hover:text-red-300 ml-auto"
                     onClick={() => removeSpan(span.index)}
                   >
                     Eliminar
@@ -126,26 +126,26 @@ export default function GeometriaPage() {
       </Card>
 
       {/* Apoyos */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Condiciones de Apoyo</CardTitle>
+          <CardTitle className="text-blue-400">Condiciones de Apoyo</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left">
-                  <th className="p-2 font-medium">Nodo</th>
-                  <th className="p-2 font-medium">Tipo de apoyo</th>
-                  <th className="p-2 font-medium">Long. apoyo (mm)</th>
-                  <th className="p-2 font-medium">Rigidizador</th>
-                  <th className="p-2 font-medium">Articulacion</th>
+                <tr className="border-b border-slate-700 text-left bg-slate-800">
+                  <th className="p-2 font-medium text-slate-300">Nodo</th>
+                  <th className="p-2 font-medium text-slate-300">Tipo de apoyo</th>
+                  <th className="p-2 font-medium text-slate-300">Long. apoyo (mm)</th>
+                  <th className="p-2 font-medium text-slate-300">Rigidizador</th>
+                  <th className="p-2 font-medium text-slate-300">Articulacion</th>
                 </tr>
               </thead>
               <tbody>
                 {supports.map((sup) => (
-                  <tr key={sup.nodeIndex} className="border-b">
-                    <td className="p-2 font-medium">N{sup.nodeIndex}</td>
+                  <tr key={sup.nodeIndex} className="border-b border-slate-700 bg-slate-900">
+                    <td className="p-2 font-medium text-slate-200">N{sup.nodeIndex}</td>
                     <td className="p-2">
                       <Select
                         value={sup.type}
@@ -170,7 +170,7 @@ export default function GeometriaPage() {
                     <td className="p-2">
                       <Input
                         type="number"
-                        className="w-24"
+                        className="w-24 input-blueprint"
                         value={sup.bearingLength}
                         onChange={(e) =>
                           updateSupport(sup.nodeIndex, {
@@ -210,9 +210,9 @@ export default function GeometriaPage() {
                               hasHinge: e.target.checked,
                             })
                           }
-                          className="h-4 w-4 rounded border-gray-300"
+                          className="h-4 w-4 rounded border-slate-600"
                         />
-                        <span className="text-xs">M = 0</span>
+                        <span className="text-xs text-slate-300">M = 0</span>
                       </label>
                     </td>
                   </tr>
@@ -225,12 +225,12 @@ export default function GeometriaPage() {
 
       {/* Vinculación entre vanos */}
       {spans.length > 1 && (
-        <Card>
+        <Card className="bg-slate-900 border-slate-700">
           <CardHeader>
-            <CardTitle>Vinculación entre Vanos</CardTitle>
+            <CardTitle className="text-blue-400">Vinculación entre Vanos</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-slate-400 mb-4">
               Defina cómo se vinculan los vanos consecutivos en cada apoyo interior.
               En el modelo actual (Fase 1) cada vano se analiza como viga simplemente apoyada (SS).
               Los apoyos con articulación (M=0) garantizan discontinuidad de momento.
@@ -238,20 +238,20 @@ export default function GeometriaPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left">
-                    <th className="p-2 font-medium">Apoyo</th>
-                    <th className="p-2 font-medium">Vano Izq.</th>
-                    <th className="p-2 font-medium">Vano Der.</th>
-                    <th className="p-2 font-medium">Vinculación</th>
-                    <th className="p-2 font-medium">Descripción</th>
+                  <tr className="border-b border-slate-700 text-left bg-slate-800">
+                    <th className="p-2 font-medium text-slate-300">Apoyo</th>
+                    <th className="p-2 font-medium text-slate-300">Vano Izq.</th>
+                    <th className="p-2 font-medium text-slate-300">Vano Der.</th>
+                    <th className="p-2 font-medium text-slate-300">Vinculación</th>
+                    <th className="p-2 font-medium text-slate-300">Descripción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {supports.slice(1, -1).map((sup) => (
-                    <tr key={sup.nodeIndex} className="border-b">
-                      <td className="p-2 font-medium">N{sup.nodeIndex}</td>
-                      <td className="p-2">V{sup.nodeIndex}</td>
-                      <td className="p-2">V{sup.nodeIndex + 1}</td>
+                    <tr key={sup.nodeIndex} className="border-b border-slate-700 bg-slate-900">
+                      <td className="p-2 font-medium text-slate-200">N{sup.nodeIndex}</td>
+                      <td className="p-2 text-slate-300">V{sup.nodeIndex}</td>
+                      <td className="p-2 text-slate-300">V{sup.nodeIndex + 1}</td>
                       <td className="p-2">
                         <Select
                           value={sup.hasHinge ? "articulated" : "continuous"}
@@ -270,7 +270,7 @@ export default function GeometriaPage() {
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="p-2 text-xs text-muted-foreground">
+                      <td className="p-2 text-xs text-slate-500">
                         {sup.hasHinge
                           ? "Momento nulo en el apoyo — vanos independientes"
                           : "Continuidad de momento — Fase 2 (FEM continuo)"}
@@ -280,7 +280,7 @@ export default function GeometriaPage() {
                 </tbody>
               </table>
             </div>
-            <div className="mt-3 p-3 rounded-md bg-amber-50 border border-amber-200 text-sm text-amber-800">
+            <div className="mt-3 p-3 rounded-md bg-amber-950/30 border border-amber-700 text-sm text-amber-400">
               <strong>Nota Fase 1:</strong> Actualmente todos los vanos se analizan como vigas
               simplemente apoyadas (articuladas en cada extremo). La vinculación &quot;Continua&quot;
               se implementará en la Fase 2 con análisis FEM 1D.
@@ -290,14 +290,14 @@ export default function GeometriaPage() {
       )}
 
       {/* Visualizacion SVG */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Vista esquematica</CardTitle>
+          <CardTitle className="text-blue-400">Vista esquematica</CardTitle>
         </CardHeader>
         <CardContent>
           <svg
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            className="w-full border rounded-lg bg-white"
+            className="w-full border border-slate-700 rounded-lg bg-slate-950"
           >
             {/* Beam line */}
             <line
@@ -329,7 +329,7 @@ export default function GeometriaPage() {
                     x={midX}
                     y={beamY - 12}
                     textAnchor="middle"
-                    className="text-xs fill-blue-600"
+                    className="text-xs fill-blue-400"
                     fontSize={11}
                   >
                     {span.length.toFixed(1)} m
@@ -365,7 +365,7 @@ export default function GeometriaPage() {
                       y1={beamY}
                       x2={xPos}
                       y2={beamY + triH + 4}
-                      stroke="#374151"
+                      stroke="#94a3b8"
                       strokeWidth={2}
                     />
                     {[0, 4, 8, 12].map((dy) => (
@@ -375,7 +375,7 @@ export default function GeometriaPage() {
                         y1={beamY + triH + dy}
                         x2={xPos + 6}
                         y2={beamY + triH + dy}
-                        stroke="#374151"
+                        stroke="#94a3b8"
                         strokeWidth={1}
                       />
                     ))}
@@ -384,7 +384,7 @@ export default function GeometriaPage() {
                       y={beamY + triH + 24}
                       textAnchor="middle"
                       fontSize={9}
-                      className="fill-gray-500"
+                      className="fill-slate-400"
                     >
                       N{sup.nodeIndex}
                     </text>
@@ -398,7 +398,7 @@ export default function GeometriaPage() {
                   <polygon
                     points={`${xPos},${beamY} ${xPos - 8},${beamY + triH} ${xPos + 8},${beamY + triH}`}
                     fill="none"
-                    stroke="#374151"
+                    stroke="#94a3b8"
                     strokeWidth={1.5}
                   />
                   {isRoller && (
@@ -407,7 +407,7 @@ export default function GeometriaPage() {
                       cy={beamY + triH + 4}
                       r={3}
                       fill="none"
-                      stroke="#374151"
+                      stroke="#94a3b8"
                       strokeWidth={1.5}
                     />
                   )}
@@ -416,7 +416,7 @@ export default function GeometriaPage() {
                     y={beamY + triH + (isRoller ? 20 : 16)}
                     textAnchor="middle"
                     fontSize={9}
-                    className="fill-gray-500"
+                    className="fill-slate-400"
                   >
                     N{sup.nodeIndex}
                   </text>

@@ -265,9 +265,9 @@ export default function SeccionPage() {
   return (
     <div className="space-y-6">
       {/* Tipo de seccion */}
-      <Card>
+      <Card className="bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle>Tipo de Seccion Transversal</CardTitle>
+          <CardTitle className="text-blue-400">Tipo de Seccion Transversal</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -277,12 +277,12 @@ export default function SeccionPage() {
                 onClick={() => handleTypeSelect(st.type)}
                 className={`cursor-pointer rounded-lg border-2 p-3 transition-colors ${
                   selectedType === st.type
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-blue-300"
+                    ? "border-blue-500 bg-blue-950/50"
+                    : "border-slate-700 hover:border-blue-300"
                 }`}
               >
-                <div className="font-semibold text-sm">{st.label}</div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="font-semibold text-sm text-slate-200">{st.label}</div>
+                <div className="text-xs text-slate-400 mt-1">
                   {st.desc}
                 </div>
               </div>
@@ -317,7 +317,7 @@ export default function SeccionPage() {
                     autoComplete="off"
                   />
                   {showProfileDropdown && (
-                    <div className="absolute z-50 w-full mt-1 max-h-80 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg">
+                    <div className="absolute z-50 w-full mt-1 max-h-80 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                       {Object.entries(profileGroups).map(([series, _names]) => {
                         const filtered = filteredProfiles.filter(
                           (p) => p.series === series
@@ -325,15 +325,15 @@ export default function SeccionPage() {
                         if (filtered.length === 0) return null;
                         return (
                           <div key={series}>
-                            <div className="px-3 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 sticky top-0">
+                            <div className="px-3 py-1.5 text-xs font-bold text-slate-400 bg-slate-900 sticky top-0">
                               {series}
                             </div>
                             {filtered.map((p) => (
                               <div
                                 key={p.name}
                                 onClick={() => handleProfileSelect(p)}
-                                className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors ${
-                                  profileName === p.name ? "bg-blue-100 font-semibold" : ""
+                                className={`px-3 py-2 text-sm cursor-pointer hover:bg-slate-700 transition-colors ${
+                                  profileName === p.name ? "bg-blue-950 font-semibold text-blue-300" : ""
                                 }`}
                               >
                                 <span className="font-medium">{p.name}</span>
@@ -363,7 +363,7 @@ export default function SeccionPage() {
               </div>
 
               {profileName && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-200">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                   <div className="text-sm">
                     <span className="text-muted-foreground">d = </span>
                     <span className="font-semibold">{dims.d} mm</span>
@@ -693,7 +693,7 @@ export default function SeccionPage() {
                       placeholder="Buscar perfil base..."
                     />
                     {showProfileDropdown && (
-                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
                           <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
                             {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
@@ -736,7 +736,7 @@ export default function SeccionPage() {
                       placeholder="Buscar perfil base..."
                     />
                     {showProfileDropdown && (
-                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
                           <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
                             {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
@@ -775,7 +775,7 @@ export default function SeccionPage() {
                       placeholder="Buscar perfil base..."
                     />
                     {showProfileDropdown && (
-                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
                           <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
                             {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
@@ -812,7 +812,7 @@ export default function SeccionPage() {
                       placeholder="Buscar perfil principal..."
                     />
                     {showProfileDropdown && (
-                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
                           <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
                             {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
@@ -892,7 +892,7 @@ export default function SeccionPage() {
                       placeholder="Buscar perfil..."
                     />
                     {showProfileDropdown && (
-                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg">
+                      <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-slate-800 border border-slate-700 rounded-lg shadow-lg">
                         {filteredProfiles.map((p) => (
                           <div key={p.name} onClick={() => handleProfileSelect(p)} className="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50">
                             {p.name} <span className="text-xs text-muted-foreground">d={p.d} bf={p.bf}</span>
@@ -905,7 +905,7 @@ export default function SeccionPage() {
                 <DimInput label="Separacion entre ejes (mm)" value={companionSep} onChange={setCompanionSep} />
               </div>
               {profileName && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-200">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                   <div className="text-sm"><span className="text-muted-foreground">d = </span><span className="font-semibold">{dims.d} mm</span></div>
                   <div className="text-sm"><span className="text-muted-foreground">bf = </span><span className="font-semibold">{dims.bfs} mm</span></div>
                   <div className="text-sm"><span className="text-muted-foreground">tf = </span><span className="font-semibold">{dims.tfs} mm</span></div>
@@ -1184,7 +1184,7 @@ export default function SeccionPage() {
 
           {/* Summary of selected rail */}
           {rail.type !== "none" && rail.hr > 0 && (
-            <div className="p-3 bg-gray-50 rounded-lg border text-sm grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 text-sm grid grid-cols-2 md:grid-cols-4 gap-2">
               <div><span className="text-muted-foreground">hr = </span><span className="font-semibold">{rail.hr} mm</span></div>
               <div><span className="text-muted-foreground">br = </span><span className="font-semibold">{rail.br} mm</span></div>
               <div><span className="text-muted-foreground">tw_r = </span><span className="font-semibold">{rail.tw_r} mm</span></div>
