@@ -1,0 +1,6 @@
+viga-carrilera/node_modules/
+viga-carrilera/.next/
+viga-carrilera/prisma/dev.db
+viga-carrilera/dev.db
+viga-carrilera/src/generated/
+.env
